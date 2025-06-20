@@ -1,226 +1,232 @@
 // backend/index.js
+require('dotenv').config();                 // ← lee las variables de .env
 const express  = require('express');
 const cors     = require('cors');
 const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
-const sqlite3  = require('sqlite3').verbose();
+const { createClient } = require('@supabase/supabase-js');
 
 const app    = express();
-const PORT   = 3001;
-const SECRET = 'super-clave-secreta';
+const PORT   = process.env.PORT || 3001;
+const SECRET = process.env.SECRET || 'super-clave-secreta';
 
-// ───── Middlewares ────────────────────────────────────────────────
+// ───── Supabase (PostgreSQL) ─────────────────────────────────────
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY,
+  { auth: { persistSession: false } }      // desactiva cookies
+);
+
+// ───── Middlewares ───────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 
-// ───── Base de datos ──────────────────────────────────────────────
-const db = new sqlite3.Database('./usuarios.db', (err) => {
-  if (err) console.error('Error al abrir SQLite', err.message);
-});
-
-// ── Tabla de usuarios
-db.run(`CREATE TABLE IF NOT EXISTS usuarios (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  usuario TEXT UNIQUE,
-  contraseña TEXT,
-  rol TEXT
-)`);
-
-// ── Inserta admin y colaborador por defecto
-[
-  {
-    usuario: 'rodpineda15@gmail.com',
-    contraseña: 'Ganaroganarx100pre',
-    rol: 'admin'
-  },
-  {
-    usuario: 'operaciones.paconsultores@gmail.com',
-    contraseña: 'EquipoPA2025',
-    rol: 'colaborador'
-  }
-].forEach(u => {
-  db.get("SELECT 1 FROM usuarios WHERE usuario = ?", [u.usuario], (err, row) => {
-    if (!row) {
-      const hash = bcrypt.hashSync(u.contraseña, 10);
-      db.run("INSERT INTO usuarios (usuario, contraseña, rol) VALUES (?, ?, ?)",
-        [u.usuario, hash, u.rol]);
+// ───── Seeder inicial (usuarios + colaboradores) ────────────────
+(async () => {
+  // 1. Usuarios
+  const usuariosSeed = [
+    {
+      usuario: 'rodpineda15@gmail.com',
+      contraseña: 'Ganaroganarx100pre',
+      rol: 'admin'
+    },
+    {
+      usuario: 'operaciones.paconsultores@gmail.com',
+      contraseña: 'EquipoPA2025',
+      rol: 'colaborador'
     }
-  });
-});
+  ];
 
-// ── Tabla de tareas
-db.run(`CREATE TABLE IF NOT EXISTS tareas (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  descripcion TEXT,
-  colaborador TEXT,
-  estado TEXT,
-  horaInicio TEXT,
-  horaFin TEXT,
-  tiempo TEXT,
-  fechaEntrega TEXT
-)`);
+  for (const u of usuariosSeed) {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('usuario', u.usuario)
+      .single();
 
-// ── Tabla de colaboradores
-db.run(`CREATE TABLE IF NOT EXISTS colaboradores (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nombre TEXT NOT NULL
-)`);
-
-// Seed inicial de colaboradores si la tabla está vacía
-db.get("SELECT COUNT(*) AS total FROM colaboradores", (err, row) => {
-  if (row.total === 0) {
-    [
-      "Didier Ortiz",
-      "Álvaro Melara",
-      "Erick Arévalo",
-      "Rodrigo Pineda",
-      "Silvia Baires"
-    ].forEach(nombre => {
-      db.run("INSERT INTO colaboradores (nombre) VALUES (?)", [nombre]);
-    });
+    if (!data) {
+      await supabase.from('usuarios').insert({
+        usuario: u.usuario,
+        contraseña: bcrypt.hashSync(u.contraseña, 10),
+        rol: u.rol
+      });
+    }
   }
-});
 
-// ───── Rutas de autenticación ────────────────────────────────────
-app.post('/login', (req, res) => {
+  // 2. Colaboradores
+  const colaboradoresSeed = [
+    'Didier Ortiz',
+    'Álvaro Melara',
+    'Erick Arévalo',
+    'Rodrigo Pineda',
+    'Silvia Baires'
+  ];
+
+  for (const nombre of colaboradoresSeed) {
+    const { data } = await supabase
+      .from('colaboradores')
+      .select('id')
+      .eq('nombre', nombre)
+      .single();
+
+    if (!data) {
+      await supabase.from('colaboradores').insert({ nombre });
+    }
+  }
+})();
+
+// ───── Rutas de autenticación ───────────────────────────────────
+app.post('/login', async (req, res) => {
   const { usuario, contraseña } = req.body;
-  db.get("SELECT * FROM usuarios WHERE usuario = ?", [usuario], (err, row) => {
-    if (err)   return res.status(500).json({ error: 'Error de servidor' });
-    if (!row || !bcrypt.compareSync(contraseña, row.contraseña))
-      return res.status(401).json({ error: 'Credenciales inválidas' });
 
-    const token = jwt.sign({ usuario: row.usuario, rol: row.rol }, SECRET, { expiresIn: '1h' });
-    res.json({ token, rol: row.rol });
+  const { data: user, error } = await supabase
+    .from('usuarios')
+    .select('*')
+    .eq('usuario', usuario)
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  if (!user || !bcrypt.compareSync(contraseña, user.contraseña)) {
+    return res.status(401).json({ error: 'Credenciales inválidas' });
+  }
+
+  const token = jwt.sign({ usuario: user.usuario, rol: user.rol }, SECRET, {
+    expiresIn: '1h'
   });
+  res.json({ token, rol: user.rol });
 });
 
-// ───── Rutas de tareas ────────────────────────────────────────────
-app.get('/tareas', (req, res) => {
-  db.all("SELECT * FROM tareas", [], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'Error al obtener tareas' });
-    res.json(rows);
-  });
+// ───── Rutas de tareas ──────────────────────────────────────────
+app.get('/tareas', async (_req, res) => {
+  const { data, error } = await supabase.from('tareas').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
-app.post('/tareas', (req, res) => {
+app.post('/tareas', async (req, res) => {
   const { descripcion, colaborador, fechaEntrega } = req.body;
-  db.run(
-    `INSERT INTO tareas (descripcion, colaborador, estado, fechaEntrega)
-     VALUES (?, ?, 'No iniciada', ?)`,
-    [descripcion, colaborador, fechaEntrega],
-    function (err) {
-      if (err) return res.status(500).json({ error: 'Error al crear tarea' });
-      res.json({ id: this.lastID });
-    }
-  );
+
+  const { data, error } = await supabase.from('tareas').insert({
+    descripcion,
+    colaborador,
+    fechaEntrega,
+    estado: 'No iniciada'
+  }).select('id').single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id });
 });
 
-app.put('/tareas/:id', (req, res) => {
+app.put('/tareas/:id', async (req, res) => {
   const { estado, horaInicio, horaFin, tiempo } = req.body;
-  db.run(
-    `UPDATE tareas
-       SET estado = ?, horaInicio = ?, horaFin = ?, tiempo = ?
-     WHERE id = ?`,
-    [estado, horaInicio, horaFin, tiempo, req.params.id],
-    (err) => {
-      if (err) return res.status(500).json({ error: 'Error al actualizar tarea' });
-      res.json({ mensaje: 'Tarea actualizada' });
-    }
-  );
+  const { id } = req.params;
+
+  const { error } = await supabase
+    .from('tareas')
+    .update({ estado, horaInicio, horaFin, tiempo })
+    .eq('id', id);
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Tarea actualizada' });
 });
 
-app.delete('/tareas/:id', (req, res) => {
-  db.run(`DELETE FROM tareas WHERE id = ?`, [req.params.id], (err) => {
-    if (err) return res.status(500).json({ error: 'Error al eliminar tarea' });
-    res.json({ mensaje: 'Tarea eliminada' });
-  });
+app.delete('/tareas/:id', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from('tareas').delete().eq('id', id);
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Tarea eliminada' });
 });
 
-// ───── Rutas de colaboradores ────────────────────────────────────
-app.get('/colaboradores', (req, res) => {
-  db.all("SELECT * FROM colaboradores", [], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'Error al obtener colaboradores' });
-    res.json(rows);
-  });
+// ───── Rutas de colaboradores ───────────────────────────────────
+app.get('/colaboradores', async (_req, res) => {
+  const { data, error } = await supabase.from('colaboradores').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
-app.post('/colaboradores', (req, res) => {
+app.post('/colaboradores', async (req, res) => {
   const { nombre } = req.body;
   if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
 
-  db.run("INSERT INTO colaboradores (nombre) VALUES (?)", [nombre], function (err) {
-    if (err) return res.status(500).json({ error: 'Error al crear colaborador' });
-    res.json({ id: this.lastID, nombre });
-  });
+  const { data, error } = await supabase
+    .from('colaboradores')
+    .insert({ nombre })
+    .select('id, nombre')
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
-app.delete('/colaboradores/:id', (req, res) => {
-  db.run("DELETE FROM colaboradores WHERE id = ?", [req.params.id], (err) => {
-    if (err) return res.status(500).json({ error: 'Error al eliminar colaborador' });
-    res.json({ mensaje: 'Colaborador eliminado' });
-  });
+app.delete('/colaboradores/:id', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from('colaboradores').delete().eq('id', id);
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Colaborador eliminado' });
 });
 
-// ───── Reporte: tareas no iniciadas ──────────────────────────────
-app.get('/reporte-no-iniciadas', (req, res) => {
+// ───── Reporte: tareas no iniciadas ─────────────────────────────
+app.get('/reporte-no-iniciadas', async (req, res) => {
   const { colaborador } = req.query;
 
-  let sql = "SELECT id, descripcion, colaborador, fechaEntrega FROM tareas WHERE estado = 'No iniciada'";
-  const params = [];
+  let query = supabase.from('tareas')
+    .select('id, descripcion, colaborador, fechaEntrega')
+    .eq('estado', 'No iniciada');
 
-  if (colaborador) {
-    sql += " AND colaborador = ?";
-    params.push(colaborador);
-  }
+  if (colaborador) query = query.eq('colaborador', colaborador);
 
-  db.all(sql, params, (err, rows) => {
-    if (err) return res.status(500).json({ error: 'Error al obtener reporte' });
-    res.json(rows);
-  });
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json(data);
 });
 
-// ───── Reporte: resumen por colaborador ─────────────────────────────
-app.get('/reporte-resumen', (req, res) => {
-  const sql = `
-    SELECT colaborador,
-      SUM(CASE WHEN estado = 'No iniciada' THEN 1 ELSE 0 END) AS noIniciadas,
-      SUM(CASE WHEN estado = 'En proceso' THEN 1 ELSE 0 END) AS enProceso,
-      SUM(CASE WHEN estado = 'Finalizado' THEN 1 ELSE 0 END) AS finalizadas,
-      SUM(CASE
-            WHEN estado = 'Finalizado' AND 
-                 date(horaFin) <= date(fechaEntrega)
-            THEN 1 ELSE 0
-          END) AS puntuales
-    FROM tareas
-    GROUP BY colaborador
-  `;
+// ───── Reporte: resumen por colaborador ─────────────────────────
+app.get('/reporte-resumen', async (_req, res) => {
+  const { data: tareas, error } = await supabase.from('tareas').select('*');
+  if (error) return res.status(500).json({ error: error.message });
 
-  db.all(sql, [], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'Error al generar el resumen' });
-
-    const resumen = rows.map(row => {
-      const total = row.finalizadas || 0;
-      const puntual = row.puntuales || 0;
-      const porcentaje = total ? (puntual / total) : 0;
-      const estrellas = Math.floor(porcentaje * 5);
-      const comentario = porcentaje >= 0.6 ? 'Excelente' : 'Necesita mejorar';
-
-      return {
-        colaborador: row.colaborador,
-        noIniciadas: row.noIniciadas,
-        enProceso: row.enProceso,
-        finalizadas: total,
-        puntuales: puntual,
-        estrellas,
-        comentario
+  // Agrupar en memoria
+  const resumen = {};
+  tareas.forEach(t => {
+    if (!resumen[t.colaborador]) {
+      resumen[t.colaborador] = {
+        noIniciadas: 0,
+        enProceso: 0,
+        finalizadas: 0,
+        puntuales: 0
       };
-    });
-
-    res.json(resumen);
+    }
+    if (t.estado === 'No iniciada') resumen[t.colaborador].noIniciadas++;
+    if (t.estado === 'En proceso')  resumen[t.colaborador].enProceso++;
+    if (t.estado === 'Finalizado')  {
+      resumen[t.colaborador].finalizadas++;
+      const entrega = new Date(t.fechaEntrega);
+      const fin     = new Date(t.horaFin);
+      if (fin <= entrega.setHours(23,59,59,999)) {
+        resumen[t.colaborador].puntuales++;
+      }
+    }
   });
+
+  // Formatear
+  const resultado = Object.entries(resumen).map(([colaborador, r]) => {
+    const porcentaje = r.finalizadas ? (r.puntuales / r.finalizadas) : 0;
+    return {
+      colaborador,
+      ...r,
+      estrellas: Math.floor(porcentaje * 5),
+      comentario: porcentaje >= 0.6 ? 'Excelente' : 'Necesita mejorar'
+    };
+  });
+
+  res.json(resultado);
 });
 
-// ───── Iniciar servidor ───────────────────────────────────────────
+// ───── Iniciar servidor ─────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
 });
