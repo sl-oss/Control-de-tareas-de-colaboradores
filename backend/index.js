@@ -23,7 +23,6 @@ app.use(express.json());
 
 // ───── Seeder inicial (usuarios + colaboradores) ────────────────
 (async () => {
-  // 1. Usuarios
   const usuariosSeed = [
     {
       usuario: 'rodpineda15@gmail.com',
@@ -42,9 +41,9 @@ app.use(express.json());
       .from('usuarios')
       .select('id')
       .eq('usuario', u.usuario)
-      .single();
+      .limit(1);
 
-    if (!data) {
+    if (!data || data.length === 0) {
       await supabase.from('usuarios').insert({
         usuario: u.usuario,
         contraseña: bcrypt.hashSync(u.contraseña, 10),
@@ -53,7 +52,6 @@ app.use(express.json());
     }
   }
 
-  // 2. Colaboradores
   const colaboradoresSeed = [
     'Didier Ortiz',
     'Álvaro Melara',
@@ -67,9 +65,9 @@ app.use(express.json());
       .from('colaboradores')
       .select('id')
       .eq('nombre', nombre)
-      .single();
+      .limit(1);
 
-    if (!data) {
+    if (!data || data.length === 0) {
       await supabase.from('colaboradores').insert({ nombre });
     }
   }
@@ -79,13 +77,15 @@ app.use(express.json());
 app.post('/login', async (req, res) => {
   const { usuario, contraseña } = req.body;
 
-  const { data: user, error } = await supabase
+  const { data, error } = await supabase
     .from('usuarios')
     .select('*')
     .eq('usuario', usuario)
-    .single();
+    .limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
+
+  const user = data && data.length ? data[0] : null;
 
   if (!user || !bcrypt.compareSync(contraseña, user.contraseña)) {
     return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -112,10 +112,10 @@ app.post('/tareas', async (req, res) => {
     colaborador,
     fechaEntrega,
     estado: 'No iniciada'
-  }).select('id').single();
+  }).select('id').limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ id: data.id });
+  res.json({ id: data && data.length ? data[0].id : null });
 });
 
 app.put('/tareas/:id', async (req, res) => {
@@ -154,10 +154,10 @@ app.post('/colaboradores', async (req, res) => {
     .from('colaboradores')
     .insert({ nombre })
     .select('id, nombre')
-    .single();
+    .limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  res.json(data && data.length ? data[0] : {});
 });
 
 app.delete('/colaboradores/:id', async (req, res) => {
@@ -189,7 +189,6 @@ app.get('/reporte-resumen', async (_req, res) => {
   const { data: tareas, error } = await supabase.from('tareas').select('*');
   if (error) return res.status(500).json({ error: error.message });
 
-  // Agrupar en memoria
   const resumen = {};
   tareas.forEach(t => {
     if (!resumen[t.colaborador]) {
@@ -212,7 +211,6 @@ app.get('/reporte-resumen', async (_req, res) => {
     }
   });
 
-  // Formatear
   const resultado = Object.entries(resumen).map(([colaborador, r]) => {
     const porcentaje = r.finalizadas ? (r.puntuales / r.finalizadas) : 0;
     return {
