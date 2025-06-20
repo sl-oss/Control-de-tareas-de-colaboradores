@@ -6,14 +6,14 @@ function ReporteSeguimiento() {
   const [seleccionado, setSeleccionado] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:3001/colaboradores")
+    fetch("https://control-de-tareas-de-colaboradores.onrender.com/colaboradores")
       .then((res) => res.json())
       .then(setColaboradores);
   }, []);
 
   useEffect(() => {
     if (!seleccionado) return;
-    fetch("http://localhost:3001/tareas")
+    fetch("https://control-de-tareas-de-colaboradores.onrender.com/tareas")
       .then((res) => res.json())
       .then((data) => {
         const filtradas = data.filter(
@@ -31,7 +31,7 @@ function ReporteSeguimiento() {
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-200 text-gray-900">
+    <div className="min-h-screen p-6 bg-gray-100 text-gray-900">
       <h2 className="text-2xl font-bold mb-6 text-green-700">
         Seguimiento por colaborador
       </h2>

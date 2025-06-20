@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import BASE_URL from "../config"; // ← Importar la URL pública
 
 function Login() {
   const [usuario, setUsuario] = useState("operaciones.paconsultores@gmail.com");
@@ -11,7 +12,7 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:3001/login", {
+      const res = await fetch(`${BASE_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ usuario, contraseña }),

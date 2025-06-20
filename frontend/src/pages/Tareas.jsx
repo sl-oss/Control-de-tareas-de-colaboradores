@@ -14,8 +14,10 @@ function Tareas() {
     fechaEntrega: "",
   });
 
+  const API = "https://control-de-tareas-de-colaboradores.onrender.com";
+
   useEffect(() => {
-    fetch("http://localhost:3001/colaboradores")
+    fetch(`${API}/colaboradores`)
       .then((res) => res.json())
       .then((data) => {
         setColaboradores(data);
@@ -26,7 +28,7 @@ function Tareas() {
       .catch(() => console.error("Error al cargar colaboradores"));
 
     const cargarTareas = () => {
-      fetch("http://localhost:3001/tareas")
+      fetch(`${API}/tareas`)
         .then((res) => res.json())
         .then((data) => setTareas(data))
         .catch(() => console.error("Error al cargar tareas"));
@@ -37,14 +39,9 @@ function Tareas() {
     return () => clearInterval(intervalo);
   }, []);
 
-  const cerrarSesion = () => {
-    localStorage.clear();
-    navigate("/");
-  };
-
   const crearTarea = async (e) => {
     e.preventDefault();
-    const res = await fetch("http://localhost:3001/tareas", {
+    const res = await fetch(`${API}/tareas`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(nuevaTarea),
@@ -77,7 +74,7 @@ function Tareas() {
 
   const iniciarTarea = async (id) => {
     const ahora = new Date().toISOString();
-    const res = await fetch(`http://localhost:3001/tareas/${id}`, {
+    const res = await fetch(`${API}/tareas/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -105,7 +102,7 @@ function Tareas() {
     const inicio = new Date(tarea.horaInicio);
     const diffMin = Math.round((ahora - inicio) / 60000);
 
-    const res = await fetch(`http://localhost:3001/tareas/${id}`, {
+    const res = await fetch(`${API}/tareas/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -135,7 +132,7 @@ function Tareas() {
   const eliminarTarea = async (id) => {
     if (!confirm("¿Estás seguro de eliminar esta tarea?")) return;
 
-    const res = await fetch(`http://localhost:3001/tareas/${id}`, {
+    const res = await fetch(`${API}/tareas/${id}`, {
       method: "DELETE",
     });
 

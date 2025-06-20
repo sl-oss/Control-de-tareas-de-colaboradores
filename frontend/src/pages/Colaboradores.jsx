@@ -1,21 +1,24 @@
 import { useEffect, useState } from "react";
+import BASE_URL from "../config";               // ← 1) URL central
 
 function Colaboradores() {
   const [colaboradores, setColaboradores] = useState([]);
   const [nuevoNombre, setNuevoNombre] = useState("");
 
+  // ───────── Obtener colaboradores ─────────
   useEffect(() => {
-    fetch("http://localhost:3001/colaboradores")
+    fetch(`${BASE_URL}/colaboradores`)          // ← 2) URL pública
       .then((res) => res.json())
-      .then((data) => setColaboradores(data))
+      .then(setColaboradores)
       .catch((err) => console.error("Error al cargar colaboradores", err));
   }, []);
 
+  // ───────── Agregar colaborador ─────────
   const agregarColaborador = async (e) => {
     e.preventDefault();
     if (!nuevoNombre.trim()) return;
 
-    const res = await fetch("http://localhost:3001/colaboradores", {
+    const res = await fetch(`${BASE_URL}/colaboradores`, {   // ← 2)
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nombre: nuevoNombre }),
@@ -30,20 +33,22 @@ function Colaboradores() {
     }
   };
 
+  // ───────── Eliminar colaborador ─────────
   const eliminarColaborador = async (id) => {
     if (!confirm("¿Seguro que querés eliminar este colaborador?")) return;
 
-    const res = await fetch(`http://localhost:3001/colaboradores/${id}`, {
+    const res = await fetch(`${BASE_URL}/colaboradores/${id}`, { // ← 2)
       method: "DELETE",
     });
 
     if (res.ok) {
-      setColaboradores(colaboradores.filter((c) => c.id !== id));
+      setColaboradores((prev) => prev.filter((c) => c.id !== id));
     } else {
       alert("Error al eliminar colaborador");
     }
   };
 
+  // ───────── UI ─────────
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900 p-6">
       <form

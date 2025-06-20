@@ -4,13 +4,13 @@ function ReporteResumen() {
   const [resumen, setResumen] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:3001/reporte-resumen")
+    fetch("https://control-de-tareas-de-colaboradores.onrender.com/reporte-resumen")
       .then((res) => res.json())
       .then(setResumen);
   }, []);
 
   return (
-    <div className="min-h-screen p-6 bg-gray-200 text-gray-900">
+    <div className="min-h-screen p-6 bg-neutral-100 text-gray-900">
       <h2 className="text-2xl font-bold mb-6 text-cyan-700">
         Resumen por colaborador
       </h2>
@@ -32,7 +32,7 @@ function ReporteResumen() {
             {resumen.map((r, i) => (
               <tr
                 key={i}
-                className="border-t border-gray-200 hover:bg-cyan-50"
+                className="border-t border-gray-200 hover:bg-cyan-50 transition"
               >
                 <td className="px-3 py-2 border">{r.colaborador}</td>
                 <td className="px-3 py-2 border text-center">{r.noIniciadas}</td>
