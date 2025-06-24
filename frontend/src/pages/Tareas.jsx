@@ -43,24 +43,24 @@ function Tareas() {
   const crearTarea = async (e) => {
     e.preventDefault();
 
+    const tareaData = {
+      descripcion: nuevaTarea.descripcion,
+      colaborador: nuevaTarea.colaborador,
+      fechaEntrega: nuevaTarea.fechaEntrega,
+      estado: "No iniciada",
+    };
+
     if (editandoId) {
       const res = await fetch(`${API}/tareas/${editandoId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          descripcion: nuevaTarea.descripcion,
-          colaborador: nuevaTarea.colaborador,
-          fechaEntrega: nuevaTarea.fechaEntrega,
-          estado: "No iniciada",
-        }),
+        body: JSON.stringify(tareaData),
       });
 
       if (res.ok) {
         setTareas((prev) =>
           prev.map((t) =>
-            t.id === editandoId
-              ? { ...t, ...nuevaTarea, estado: "No iniciada" }
-              : t
+            t.id === editandoId ? { ...t, ...tareaData } : t
           )
         );
         setEditandoId(null);
@@ -69,7 +69,7 @@ function Tareas() {
       const res = await fetch(`${API}/tareas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nuevaTarea),
+        body: JSON.stringify(tareaData),
       });
 
       const data = await res.json();
@@ -78,10 +78,7 @@ function Tareas() {
           ...tareas,
           {
             id: data.id,
-            descripcion: nuevaTarea.descripcion,
-            colaborador: nuevaTarea.colaborador,
-            fechaEntrega: nuevaTarea.fechaEntrega,
-            estado: "No iniciada",
+            ...tareaData,
             horaInicio: null,
             horaFin: null,
             tiempo: null,
@@ -257,7 +254,6 @@ function Tareas() {
                 <td className="px-3 py-2">{t.id}</td>
                 <td className="px-3 py-2">{t.descripcion}</td>
                 <td className="px-3 py-2">{t.colaborador}</td>
-
                 <td className="px-3 py-2">
                   <button
                     onClick={() => iniciarTarea(t.id)}
@@ -276,21 +272,15 @@ function Tareas() {
                     Terminar
                   </button>
                 </td>
-
                 <td className="px-3 py-2">{t.estado}</td>
                 {rol === "admin" && (
-                  <td className="px-3 py-2 text-xs">
-                    {t.horaInicio?.slice(11, 19)}
-                  </td>
+                  <td className="px-3 py-2 text-xs">{t.horaInicio?.slice(11, 19)}</td>
                 )}
                 {rol === "admin" && (
-                  <td className="px-3 py-2 text-xs">
-                    {t.horaFin?.slice(11, 19)}
-                  </td>
+                  <td className="px-3 py-2 text-xs">{t.horaFin?.slice(11, 19)}</td>
                 )}
                 {rol === "admin" && <td className="px-3 py-2">{t.tiempo}</td>}
                 <td className="px-3 py-2">{t.fechaEntrega}</td>
-
                 {rol === "admin" && (
                   <>
                     <td className="px-3 py-2">
