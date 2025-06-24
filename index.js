@@ -116,8 +116,6 @@ app.put('/tareas/:id', async (req, res) => {
   const { id } = req.params;
 
   let tiempo = null;
-
-  // Ya no hacemos conversión adicional: el frontend manda hora local
   let localHoraInicio = horaInicio ? new Date(horaInicio) : null;
   let localHoraFin = horaFin ? new Date(horaFin) : null;
 
