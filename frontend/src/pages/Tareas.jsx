@@ -196,9 +196,12 @@ function Tareas() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-200 text-gray-900">
       <main className="p-6 overflow-x-auto">
-        <form onSubmit={crearTarea} className="mb-4 flex flex-wrap gap-2">
+        <form
+          onSubmit={crearTarea}
+          className="mb-6 flex flex-wrap gap-2 bg-blue-600 p-4 rounded-lg text-white shadow"
+        >
           <input
             type="text"
             placeholder="Descripción"
@@ -206,7 +209,7 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
             }
-            className="px-3 py-1 border rounded text-black"
+            className="px-3 py-1 rounded text-black"
             required
           />
           <select
@@ -214,7 +217,7 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, colaborador: e.target.value })
             }
-            className="px-3 py-1 border rounded text-black"
+            className="px-3 py-1 rounded text-black"
           >
             {colaboradores.map((c) => (
               <option key={c.id} value={c.nombre}>
@@ -228,18 +231,18 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, fechaEntrega: e.target.value })
             }
-            className="px-3 py-1 border rounded text-black"
+            className="px-3 py-1 rounded text-black"
           />
           <button
             type="submit"
-            className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-1 bg-green-600 text-white rounded hover:bg-green-700"
           >
             {editandoId ? "Actualizar" : "Crear"}
           </button>
         </form>
 
-        <table className="w-full border border-gray-700 bg-gray-900 rounded shadow text-sm">
-          <thead className="bg-gray-800 text-white">
+        <table className="w-full border border-gray-300 bg-white rounded shadow text-sm">
+          <thead className="bg-blue-100 text-gray-800">
             <tr>
               <th className="px-3 py-2">ID</th>
               <th className="px-3 py-2">Tarea</th>
@@ -259,7 +262,7 @@ function Tareas() {
             {tareas.map((t) => (
               <tr
                 key={t.id}
-                className="text-center border-t border-gray-700 hover:bg-gray-800 text-white"
+                className="text-center border-t border-gray-200 hover:bg-gray-100"
               >
                 <td className="px-3 py-2">{t.id}</td>
                 <td className="px-3 py-2">{t.descripcion}</td>
