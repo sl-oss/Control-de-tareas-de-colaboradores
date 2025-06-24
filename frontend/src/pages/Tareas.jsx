@@ -31,7 +31,10 @@ function Tareas() {
     const cargarTareas = () => {
       fetch(`${API}/tareas`)
         .then((res) => res.json())
-        .then((data) => setTareas(data))
+        .then((data) => {
+          if (Array.isArray(data)) setTareas(data);
+          else console.error("Las tareas no son un array válido");
+        })
         .catch(() => console.error("Error al cargar tareas"));
     };
 
@@ -51,8 +54,7 @@ function Tareas() {
     if (minutos === null || minutos === undefined || isNaN(minutos)) return "-";
     const hrs = Math.floor(minutos / 60);
     const mins = minutos % 60;
-    if (hrs > 0) return `${hrs} h ${mins} min`;
-    return `${mins} min`;
+    return hrs > 0 ? `${hrs} h ${mins} min` : `${mins} min`;
   };
 
   const crearTarea = async (e) => {
@@ -61,8 +63,7 @@ function Tareas() {
     const tareaData = {
       descripcion: nuevaTarea.descripcion,
       colaborador: nuevaTarea.colaborador,
-      fechaEntrega: nuevaTarea.fechaEntrega,
-      estado: "No iniciada",
+      fechaEntrega: nuevaTarea.fechaEntrega || new Date().toISOString().slice(0, 10),
     };
 
     if (editandoId) {
@@ -85,21 +86,23 @@ function Tareas() {
         body: JSON.stringify(tareaData),
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        setTareas([
-          ...tareas,
-          {
-            id: data.id,
-            ...tareaData,
-            horaInicio: null,
-            horaFin: null,
-            tiempo: null,
-          },
-        ]);
-      } else {
+      if (!res.ok) {
         alert("Error al crear tarea");
+        return;
       }
+
+      const data = await res.json();
+      setTareas([
+        ...tareas,
+        {
+          id: data.id,
+          ...tareaData,
+          estado: "No iniciada",
+          horaInicio: null,
+          horaFin: null,
+          tiempo: null,
+        },
+      ]);
     }
 
     setNuevaTarea({
@@ -158,12 +161,7 @@ function Tareas() {
       setTareas((prev) =>
         prev.map((t) =>
           t.id === id
-            ? {
-                ...t,
-                estado: "Finalizado",
-                horaFin: ahora,
-                tiempo: diffMin,
-              }
+            ? { ...t, estado: "Finalizado", horaFin: ahora, tiempo: diffMin }
             : t
         )
       );
@@ -175,9 +173,7 @@ function Tareas() {
   const eliminarTarea = async (id) => {
     if (!confirm("¿Estás seguro de eliminar esta tarea?")) return;
 
-    const res = await fetch(`${API}/tareas/${id}`, {
-      method: "DELETE",
-    });
+    const res = await fetch(`${API}/tareas/${id}`, { method: "DELETE" });
 
     if (res.ok) {
       setTareas((prev) => prev.filter((t) => t.id !== id));
@@ -196,22 +192,86 @@ function Tareas() {
   return (
     <div className="min-h-screen bg-gray-200 text-gray-900">
       <main className="p-6 overflow-x-auto">
-        {/* ...formulario y tabla... */}
-        <table className="w-full border border-gray-700 bg-gray-800 rounded shadow text-sm">
-          {/* ...thead... */}
-          <tbody>
-            {tareas.map((t) => (
-              <tr
-                key={t.id}
-                className="text-center border-t border-gray-700 hover:bg-gray-700 text-white"
-              >
-                {/* ...otras columnas... */}
-                {rol === "admin" && (
-                  <td className="px-3 py-2">{formatearTiempo(t.tiempo)}</td>
-                )}
-                {/* ...otras columnas... */}
-              </tr>
+        <form onSubmit={crearTarea} className="mb-4 space-x-2">
+          <input
+            type="text"
+            placeholder="Descripción"
+            value={nuevaTarea.descripcion}
+            onChange={(e) =>
+              setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
+            }
+            className="px-3 py-1 rounded"
+            required
+          />
+          <select
+            value={nuevaTarea.colaborador}
+            onChange={(e) =>
+              setNuevaTarea({ ...nuevaTarea, colaborador: e.target.value })
+            }
+            className="px-3 py-1 rounded"
+          >
+            {colaboradores.map((c) => (
+              <option key={c.id} value={c.nombre}>
+                {c.nombre}
+              </option>
             ))}
+          </select>
+          <input
+            type="date"
+            value={nuevaTarea.fechaEntrega}
+            onChange={(e) =>
+              setNuevaTarea({ ...nuevaTarea, fechaEntrega: e.target.value })
+            }
+            className="px-3 py-1 rounded"
+          />
+          <button type="submit" className="px-3 py-1 bg-blue-500 text-white rounded">
+            {editandoId ? "Actualizar" : "Crear"}
+          </button>
+        </form>
+
+        <table className="w-full border border-gray-700 bg-gray-800 rounded shadow text-sm">
+          <thead>
+            <tr className="text-white">
+              <th className="px-3 py-2">ID</th>
+              <th className="px-3 py-2">Descripción</th>
+              <th className="px-3 py-2">Colaborador</th>
+              <th className="px-3 py-2">Fecha Entrega</th>
+              <th className="px-3 py-2">Estado</th>
+              {rol === "admin" && <th className="px-3 py-2">Tiempo</th>}
+              <th className="px-3 py-2">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.isArray(tareas) &&
+              tareas.map((t) => (
+                <tr
+                  key={t.id}
+                  className="text-center border-t border-gray-700 hover:bg-gray-700 text-white"
+                >
+                  <td className="px-3 py-2">{t.id}</td>
+                  <td className="px-3 py-2">{t.descripcion}</td>
+                  <td className="px-3 py-2">{t.colaborador}</td>
+                  <td className="px-3 py-2">{t.fechaEntrega}</td>
+                  <td className="px-3 py-2">{t.estado}</td>
+                  {rol === "admin" && (
+                    <td className="px-3 py-2">{formatearTiempo(t.tiempo)}</td>
+                  )}
+                  <td className="px-3 py-2 space-x-2">
+                    {t.estado === "No iniciada" && (
+                      <button onClick={() => iniciarTarea(t.id)}>Iniciar</button>
+                    )}
+                    {t.estado === "En proceso" && (
+                      <button onClick={() => terminarTarea(t.id)}>Terminar</button>
+                    )}
+                    {rol === "admin" && (
+                      <>
+                        <button onClick={() => editarTarea(t)}>Editar</button>
+                        <button onClick={() => eliminarTarea(t.id)}>Eliminar</button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </main>
