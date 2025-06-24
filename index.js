@@ -117,25 +117,16 @@ app.put('/tareas/:id', async (req, res) => {
 
   let tiempo = null;
 
-  const getLocalTime = (dateStr) => {
-    const localStr = new Date(dateStr).toLocaleString('en-US', {
-      timeZone: 'America/El_Salvador'
-    });
-    return new Date(localStr);
-  };
-
-  let localHoraInicio = horaInicio ? getLocalTime(horaInicio) : null;
-  let localHoraFin = horaFin ? getLocalTime(horaFin) : null;
-  const ahoraLocal = new Date(
-    new Date().toLocaleString('en-US', { timeZone: 'America/El_Salvador' })
-  );
+  // Ya no hacemos conversión adicional: el frontend manda hora local
+  let localHoraInicio = horaInicio ? new Date(horaInicio) : null;
+  let localHoraFin = horaFin ? new Date(horaFin) : null;
 
   if (estado === 'En proceso' && !horaInicio) {
-    localHoraInicio = ahoraLocal;
+    localHoraInicio = new Date();
   }
 
   if (estado === 'Finalizado' && !horaFin) {
-    localHoraFin = ahoraLocal;
+    localHoraFin = new Date();
   }
 
   if (estado === 'Finalizado' && localHoraInicio && localHoraFin) {
