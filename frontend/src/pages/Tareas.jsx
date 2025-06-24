@@ -14,6 +14,8 @@ function Tareas() {
     fechaEntrega: "",
   });
 
+  const [editandoId, setEditandoId] = useState(null);
+
   const API = "https://control-de-tareas-de-colaboradores.onrender.com";
 
   useEffect(() => {
@@ -41,35 +43,61 @@ function Tareas() {
 
   const crearTarea = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API}/tareas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(nuevaTarea),
-    });
 
-    const data = await res.json();
-    if (res.ok) {
-      setTareas([
-        ...tareas,
-        {
-          id: data.id,
+    if (editandoId) {
+      const res = await fetch(`${API}/tareas/${editandoId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           descripcion: nuevaTarea.descripcion,
           colaborador: nuevaTarea.colaborador,
           fechaEntrega: nuevaTarea.fechaEntrega,
           estado: "No iniciada",
-          horaInicio: null,
-          horaFin: null,
-          tiempo: null,
-        },
-      ]);
-      setNuevaTarea({
-        descripcion: "",
-        colaborador: colaboradores[0]?.nombre || "",
-        fechaEntrega: "",
+        }),
       });
+
+      if (res.ok) {
+        setTareas((prev) =>
+          prev.map((t) =>
+            t.id === editandoId
+              ? { ...t, ...nuevaTarea, estado: "No iniciada" }
+              : t
+          )
+        );
+        setEditandoId(null);
+      }
     } else {
-      alert("Error al crear tarea");
+      const res = await fetch(`${API}/tareas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevaTarea),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setTareas([
+          ...tareas,
+          {
+            id: data.id,
+            descripcion: nuevaTarea.descripcion,
+            colaborador: nuevaTarea.colaborador,
+            fechaEntrega: nuevaTarea.fechaEntrega,
+            estado: "No iniciada",
+            horaInicio: null,
+            horaFin: null,
+            tiempo: null,
+          },
+        ]);
+      } else {
+        alert("Error al crear tarea");
+      }
     }
+
+    setNuevaTarea({
+      descripcion: "",
+      colaborador: colaboradores[0]?.nombre || "",
+      fechaEntrega: "",
+    });
   };
 
   const iniciarTarea = async (id) => {
@@ -141,6 +169,15 @@ function Tareas() {
     }
   };
 
+  const editarTarea = (tarea) => {
+    setNuevaTarea({
+      descripcion: tarea.descripcion,
+      colaborador: tarea.colaborador,
+      fechaEntrega: tarea.fechaEntrega,
+    });
+    setEditandoId(tarea.id);
+  };
+
   return (
     <div className="min-h-screen bg-gray-200 text-gray-900">
       <main className="p-6 overflow-x-auto">
@@ -187,7 +224,7 @@ function Tareas() {
               type="submit"
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
             >
-              Crear tarea
+              {editandoId ? "Actualizar tarea" : "Crear tarea"}
             </button>
           </form>
         )}
@@ -205,6 +242,7 @@ function Tareas() {
               {rol === "admin" && <th className="px-3 py-2">Fin</th>}
               {rol === "admin" && <th className="px-3 py-2">Tiempo</th>}
               <th className="px-3 py-2">Entrega</th>
+              {rol === "admin" && <th className="px-3 py-2">Editar</th>}
               {rol === "admin" && <th className="px-3 py-2">Eliminar</th>}
             </tr>
           </thead>
@@ -252,14 +290,24 @@ function Tareas() {
                 <td className="px-3 py-2">{t.fechaEntrega}</td>
 
                 {rol === "admin" && (
-                  <td className="px-3 py-2">
-                    <button
-                      onClick={() => eliminarTarea(t.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
-                    >
-                      🗑
-                    </button>
-                  </td>
+                  <>
+                    <td className="px-3 py-2">
+                      <button
+                        onClick={() => editarTarea(t)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded"
+                      >
+                        ✏️
+                      </button>
+                    </td>
+                    <td className="px-3 py-2">
+                      <button
+                        onClick={() => eliminarTarea(t.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
+                      >
+                        🗑
+                      </button>
+                    </td>
+                  </>
                 )}
               </tr>
             ))}
