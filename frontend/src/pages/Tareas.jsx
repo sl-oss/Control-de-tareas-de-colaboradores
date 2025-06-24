@@ -196,9 +196,9 @@ function Tareas() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-800 text-white">
+    <div className="min-h-screen bg-gray-100 text-gray-800">
       <main className="p-6 overflow-x-auto">
-        <form onSubmit={crearTarea} className="mb-4 space-x-2">
+        <form onSubmit={crearTarea} className="mb-4 flex flex-wrap gap-2">
           <input
             type="text"
             placeholder="Descripción"
@@ -206,7 +206,7 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
             }
-            className="px-3 py-1 rounded text-black"
+            className="px-3 py-1 border rounded"
             required
           />
           <select
@@ -214,7 +214,7 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, colaborador: e.target.value })
             }
-            className="px-3 py-1 rounded text-black"
+            className="px-3 py-1 border rounded"
           >
             {colaboradores.map((c) => (
               <option key={c.id} value={c.nombre}>
@@ -228,19 +228,19 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, fechaEntrega: e.target.value })
             }
-            className="px-3 py-1 rounded text-black"
+            className="px-3 py-1 border rounded"
           />
           <button
             type="submit"
-            className="px-3 py-1 bg-blue-500 text-white rounded"
+            className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             {editandoId ? "Actualizar" : "Crear"}
           </button>
         </form>
 
-        <table className="w-full border border-gray-700 bg-gray-900 rounded shadow text-sm">
-          <thead>
-            <tr className="text-white">
+        <table className="w-full border border-gray-300 bg-white rounded shadow text-sm">
+          <thead className="bg-blue-100 text-gray-800">
+            <tr>
               <th className="px-3 py-2">ID</th>
               <th className="px-3 py-2">Tarea</th>
               <th className="px-3 py-2">Colaborador</th>
@@ -259,7 +259,7 @@ function Tareas() {
             {tareas.map((t) => (
               <tr
                 key={t.id}
-                className="text-center border-t border-gray-700 hover:bg-gray-800 text-white"
+                className="text-center border-t border-gray-300 hover:bg-gray-100"
               >
                 <td className="px-3 py-2">{t.id}</td>
                 <td className="px-3 py-2">{t.descripcion}</td>
@@ -268,7 +268,7 @@ function Tareas() {
                   {t.estado === "No iniciada" && (
                     <button
                       onClick={() => iniciarTarea(t.id)}
-                      className="bg-green-600 hover:bg-green-700 px-2 py-1 rounded text-white"
+                      className="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-white"
                     >
                       Iniciar
                     </button>
@@ -292,7 +292,7 @@ function Tareas() {
                 <td className="px-3 py-2">
                   <button
                     onClick={() => editarTarea(t)}
-                    className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-white"
+                    className="bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-white"
                   >
                     ✎
                   </button>
@@ -300,7 +300,7 @@ function Tareas() {
                 <td className="px-3 py-2">
                   <button
                     onClick={() => eliminarTarea(t.id)}
-                    className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-white"
+                    className="bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-white"
                   >
                     🗑️
                   </button>
