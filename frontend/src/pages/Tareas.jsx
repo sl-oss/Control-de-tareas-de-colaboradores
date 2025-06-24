@@ -1,4 +1,3 @@
-// src/pages/Tareas.jsx
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -60,10 +59,14 @@ function Tareas() {
   const crearTarea = async (e) => {
     e.preventDefault();
 
+    const fechaEntregaFormateada = nuevaTarea.fechaEntrega
+      ? String(nuevaTarea.fechaEntrega).slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+
     const tareaData = {
       descripcion: nuevaTarea.descripcion,
       colaborador: nuevaTarea.colaborador,
-      fechaEntrega: nuevaTarea.fechaEntrega || new Date().toISOString().slice(0, 10),
+      fechaEntrega: fechaEntregaFormateada,
     };
 
     if (editandoId) {
@@ -114,6 +117,7 @@ function Tareas() {
 
   const iniciarTarea = async (id) => {
     const ahora = getHoraLocalElSalvador();
+
     const res = await fetch(`${API}/tareas/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -131,6 +135,8 @@ function Tareas() {
           t.id === id ? { ...t, estado: "En proceso", horaInicio: ahora } : t
         )
       );
+    } else {
+      alert("Error al iniciar tarea");
     }
   };
 
