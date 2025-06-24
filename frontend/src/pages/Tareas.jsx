@@ -7,13 +7,11 @@ function Tareas() {
 
   const [tareas, setTareas] = useState([]);
   const [colaboradores, setColaboradores] = useState([]);
-
   const [nuevaTarea, setNuevaTarea] = useState({
     descripcion: "",
     colaborador: "",
     fechaEntrega: "",
   });
-
   const [editandoId, setEditandoId] = useState(null);
 
   const API = "https://control-de-tareas-de-colaboradores.onrender.com";
@@ -101,7 +99,7 @@ function Tareas() {
   };
 
   const iniciarTarea = async (id) => {
-    const ahora = new Date().toISOString();
+    const ahora = new Date();
     const res = await fetch(`${API}/tareas/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -136,7 +134,7 @@ function Tareas() {
       body: JSON.stringify({
         estado: "Finalizado",
         horaInicio: tarea.horaInicio,
-        horaFin: ahora.toISOString(),
+        horaFin: ahora,
         tiempo: `${diffMin} min`,
       }),
     });
@@ -148,7 +146,7 @@ function Tareas() {
             ? {
                 ...t,
                 estado: "Finalizado",
-                horaFin: ahora.toISOString(),
+                horaFin: ahora,
                 tiempo: `${diffMin} min`,
               }
             : t
