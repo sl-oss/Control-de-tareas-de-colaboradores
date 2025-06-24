@@ -196,7 +196,7 @@ function Tareas() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-800">
+    <div className="min-h-screen bg-gray-900 text-white">
       <main className="p-6 overflow-x-auto">
         <form onSubmit={crearTarea} className="mb-4 flex flex-wrap gap-2">
           <input
@@ -206,7 +206,7 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
             }
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border rounded text-black"
             required
           />
           <select
@@ -214,7 +214,7 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, colaborador: e.target.value })
             }
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border rounded text-black"
           >
             {colaboradores.map((c) => (
               <option key={c.id} value={c.nombre}>
@@ -228,7 +228,7 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, fechaEntrega: e.target.value })
             }
-            className="px-3 py-1 border rounded"
+            className="px-3 py-1 border rounded text-black"
           />
           <button
             type="submit"
@@ -238,8 +238,8 @@ function Tareas() {
           </button>
         </form>
 
-        <table className="w-full border border-gray-300 bg-white rounded shadow text-sm">
-          <thead className="bg-blue-100 text-gray-800">
+        <table className="w-full border border-gray-700 bg-gray-900 rounded shadow text-sm">
+          <thead className="bg-gray-800 text-white">
             <tr>
               <th className="px-3 py-2">ID</th>
               <th className="px-3 py-2">Tarea</th>
@@ -259,7 +259,7 @@ function Tareas() {
             {tareas.map((t) => (
               <tr
                 key={t.id}
-                className="text-center border-t border-gray-300 hover:bg-gray-100"
+                className="text-center border-t border-gray-700 hover:bg-gray-800 text-white"
               >
                 <td className="px-3 py-2">{t.id}</td>
                 <td className="px-3 py-2">{t.descripcion}</td>
