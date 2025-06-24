@@ -81,7 +81,6 @@ app.post('/login', async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
 
   const user = data && data.length ? data[0] : null;
-
   if (!user || !bcrypt.compareSync(contraseña, user.contraseña)) {
     return res.status(401).json({ error: 'Credenciales inválidas' });
   }
@@ -112,40 +111,17 @@ app.post('/tareas', async (req, res) => {
 });
 
 app.put('/tareas/:id', async (req, res) => {
-  const { estado, horaInicio, horaFin } = req.body;
+  const { estado, horaInicio, horaFin, tiempo } = req.body;
   const { id } = req.params;
 
-  let tiempo = null;
-  let localHoraInicio = horaInicio ? new Date(horaInicio) : null;
-  let localHoraFin = horaFin ? new Date(horaFin) : null;
+  const actualizacion = {
+    estado,
+    horaInicio: horaInicio || null,
+    horaFin: horaFin || null,
+    tiempo: tiempo !== undefined ? tiempo : null
+  };
 
-  if (estado === 'En proceso' && !horaInicio) {
-    localHoraInicio = new Date();
-  }
-
-  if (estado === 'Finalizado' && !horaFin) {
-    localHoraFin = new Date();
-  }
-
-  if (estado === 'Finalizado' && localHoraInicio && localHoraFin) {
-    const diff = Math.floor((localHoraFin - localHoraInicio) / 1000);
-    const dias = Math.floor(diff / (24 * 3600));
-    const hrs = Math.floor((diff % (24 * 3600)) / 3600);
-    const min = Math.floor((diff % 3600) / 60);
-    const seg = diff % 60;
-    tiempo = `${dias}d ${hrs}h ${min}m ${seg}s`;
-  }
-
-  const { error } = await supabase
-    .from('tareas')
-    .update({
-      estado,
-      horaInicio: localHoraInicio,
-      horaFin: localHoraFin,
-      tiempo
-    })
-    .eq('id', id);
-
+  const { error } = await supabase.from('tareas').update(actualizacion).eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ mensaje: 'Tarea actualizada' });
 });
@@ -189,7 +165,9 @@ app.get('/reporte-no-iniciadas', async (req, res) => {
   let query = supabase.from('tareas')
     .select('id, descripcion, colaborador, fechaEntrega')
     .eq('estado', 'No iniciada');
+
   if (colaborador) query = query.eq('colaborador', colaborador);
+
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
