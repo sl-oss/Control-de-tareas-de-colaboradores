@@ -1,3 +1,4 @@
+// src/pages/Tareas.jsx
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -98,8 +99,11 @@ function Tareas() {
     });
   };
 
+  const obtenerHoraLocalES = () =>
+    new Date(new Date().toLocaleString("en-US", { timeZone: "America/El_Salvador" }));
+
   const iniciarTarea = async (id) => {
-    const ahora = new Date();
+    const ahora = obtenerHoraLocalES();
     const res = await fetch(`${API}/tareas/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -124,7 +128,7 @@ function Tareas() {
     const tarea = tareas.find((t) => t.id === id);
     if (!tarea?.horaInicio) return;
 
-    const ahora = new Date();
+    const ahora = obtenerHoraLocalES();
     const inicio = new Date(tarea.horaInicio);
     const diffMin = Math.round((ahora - inicio) / 60000);
 
