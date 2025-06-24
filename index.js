@@ -116,26 +116,38 @@ app.put('/tareas/:id', async (req, res) => {
   const { id } = req.params;
 
   let tiempo = null;
-  let localHoraInicio = horaInicio ? new Date(horaInicio) : null;
-  let localHoraFin = horaFin ? new Date(horaFin) : null;
+  let nuevaHoraInicio = horaInicio;
+  let nuevaHoraFin = horaFin;
 
-  if (estado === 'Finalizado' && localHoraInicio && localHoraFin) {
-    const diff = Math.floor((localHoraFin - localHoraInicio) / 1000);
-    const dias = Math.floor(diff / (24 * 3600));
-    const hrs = Math.floor((diff % (24 * 3600)) / 3600);
-    const min = Math.floor((diff % 3600) / 60);
-    const seg = diff % 60;
-    tiempo = `${dias}d ${hrs}h ${min}m ${seg}s`;
+  if (estado === 'En proceso') {
+    nuevaHoraInicio = new Date().toISOString();
   }
 
-  const zonaHora = new Date(new Date().getTime() - 6 * 60 * 60 * 1000);
+  if (estado === 'Finalizado') {
+    nuevaHoraFin = new Date().toISOString();
+
+    if (horaInicio) {
+      const inicio = new Date(horaInicio);
+      const fin = new Date(nuevaHoraFin);
+
+      if (!isNaN(inicio) && !isNaN(fin) && fin >= inicio) {
+        const diffMs = fin - inicio;
+        const diffSec = Math.floor(diffMs / 1000);
+        const days = Math.floor(diffSec / 86400);
+        const hours = Math.floor((diffSec % 86400) / 3600);
+        const minutes = Math.floor((diffSec % 3600) / 60);
+        const seconds = diffSec % 60;
+        tiempo = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      }
+    }
+  }
 
   const { error } = await supabase
     .from('tareas')
     .update({
       estado,
-      horaInicio: estado === 'En proceso' ? zonaHora : horaInicio,
-      horaFin: estado === 'Finalizado' ? zonaHora : horaFin,
+      horaInicio: nuevaHoraInicio,
+      horaFin: nuevaHoraFin,
       tiempo
     })
     .eq('id', id);
