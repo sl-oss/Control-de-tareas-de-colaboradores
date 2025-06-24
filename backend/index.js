@@ -99,12 +99,16 @@ app.get('/tareas', async (_req, res) => {
 
 app.post('/tareas', async (req, res) => {
   const { descripcion, colaborador, fechaEntrega } = req.body;
-  const { data, error } = await supabase.from('tareas').insert({
-    descripcion,
-    colaborador,
-    fechaEntrega,
-    estado: 'No iniciada'
-  }).select('id').limit(1);
+  const { data, error } = await supabase
+    .from('tareas')
+    .insert({
+      descripcion,
+      colaborador,
+      fechaEntrega,
+      estado: 'No iniciada'
+    })
+    .select('id')
+    .limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data && data.length ? data[0].id : null });
@@ -200,7 +204,7 @@ app.get('/reporte-resumen', async (_req, res) => {
   });
 
   const resultado = Object.entries(resumen).map(([colaborador, r]) => {
-    const porcentaje = r.finalizadas ? (r.puntuales / r.finalizadas) : 0;
+    const porcentaje = r.finalizadas ? r.puntuales / r.finalizadas : 0;
     return {
       colaborador,
       ...r,
