@@ -34,7 +34,7 @@ app.use(express.json());
   ];
 
   for (const u of usuariosSeed) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('usuarios')
       .select('id')
       .eq('usuario', u.usuario)
@@ -117,15 +117,18 @@ app.put('/tareas/:id', async (req, res) => {
 
   let tiempo = null;
 
-  // Asegurar hora local de El Salvador (UTC-6)
   const getLocalTime = (dateStr) => {
-    const utc = new Date(dateStr);
-    return new Date(utc.getTime() - 6 * 60 * 60 * 1000);
+    const localStr = new Date(dateStr).toLocaleString('en-US', {
+      timeZone: 'America/El_Salvador'
+    });
+    return new Date(localStr);
   };
 
   let localHoraInicio = horaInicio ? getLocalTime(horaInicio) : null;
-  let localHoraFin    = horaFin    ? getLocalTime(horaFin)    : null;
-  const ahoraLocal     = new Date(new Date().getTime() - 6 * 60 * 60 * 1000);
+  let localHoraFin = horaFin ? getLocalTime(horaFin) : null;
+  const ahoraLocal = new Date(
+    new Date().toLocaleString('en-US', { timeZone: 'America/El_Salvador' })
+  );
 
   if (estado === 'En proceso' && !horaInicio) {
     localHoraInicio = ahoraLocal;
@@ -138,9 +141,9 @@ app.put('/tareas/:id', async (req, res) => {
   if (estado === 'Finalizado' && localHoraInicio && localHoraFin) {
     const diff = Math.floor((localHoraFin - localHoraInicio) / 1000);
     const dias = Math.floor(diff / (24 * 3600));
-    const hrs  = Math.floor((diff % (24 * 3600)) / 3600);
-    const min  = Math.floor((diff % 3600) / 60);
-    const seg  = diff % 60;
+    const hrs = Math.floor((diff % (24 * 3600)) / 3600);
+    const min = Math.floor((diff % 3600) / 60);
+    const seg = diff % 60;
     tiempo = `${dias}d ${hrs}h ${min}m ${seg}s`;
   }
 
