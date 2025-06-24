@@ -1,29 +1,25 @@
 // backend/index.js
-require('dotenv').config();                 // ← lee las variables de .env
-const express  = require('express');
-const cors     = require('cors');
-const bcrypt   = require('bcryptjs');
-const jwt      = require('jsonwebtoken');
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
 
-const app    = express();
-const PORT   = process.env.PORT || 3001;
+const app = express();
+const PORT = process.env.PORT || 3001;
 const SECRET = process.env.SECRET || 'super-clave-secreta';
 
-// ───── Supabase (PostgreSQL) ─────────────────────────────────────
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY,
-  { auth: { persistSession: false } }      // desactiva cookies
+  { auth: { persistSession: false } }
 );
 
-// ───── Middlewares ───────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 
-// ───── Seeder inicial (usuarios + colaboradores) ────────────────
 (async () => {
-  // 1. Usuarios
   const usuariosSeed = [
     {
       usuario: 'rodpineda15@gmail.com',
@@ -42,9 +38,9 @@ app.use(express.json());
       .from('usuarios')
       .select('id')
       .eq('usuario', u.usuario)
-      .single();
+      .limit(1);
 
-    if (!data) {
+    if (!data || data.length === 0) {
       await supabase.from('usuarios').insert({
         usuario: u.usuario,
         contraseña: bcrypt.hashSync(u.contraseña, 10),
@@ -53,7 +49,6 @@ app.use(express.json());
     }
   }
 
-  // 2. Colaboradores
   const colaboradoresSeed = [
     'Didier Ortiz',
     'Álvaro Melara',
@@ -67,25 +62,25 @@ app.use(express.json());
       .from('colaboradores')
       .select('id')
       .eq('nombre', nombre)
-      .single();
+      .limit(1);
 
-    if (!data) {
+    if (!data || data.length === 0) {
       await supabase.from('colaboradores').insert({ nombre });
     }
   }
 })();
 
-// ───── Rutas de autenticación ───────────────────────────────────
 app.post('/login', async (req, res) => {
   const { usuario, contraseña } = req.body;
-
-  const { data: user, error } = await supabase
+  const { data, error } = await supabase
     .from('usuarios')
     .select('*')
     .eq('usuario', usuario)
-    .single();
+    .limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
+
+  const user = data && data.length ? data[0] : null;
 
   if (!user || !bcrypt.compareSync(contraseña, user.contraseña)) {
     return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -97,7 +92,6 @@ app.post('/login', async (req, res) => {
   res.json({ token, rol: user.rol });
 });
 
-// ───── Rutas de tareas ──────────────────────────────────────────
 app.get('/tareas', async (_req, res) => {
   const { data, error } = await supabase.from('tareas').select('*');
   if (error) return res.status(500).json({ error: error.message });
@@ -106,25 +100,44 @@ app.get('/tareas', async (_req, res) => {
 
 app.post('/tareas', async (req, res) => {
   const { descripcion, colaborador, fechaEntrega } = req.body;
-
   const { data, error } = await supabase.from('tareas').insert({
     descripcion,
     colaborador,
     fechaEntrega,
     estado: 'No iniciada'
-  }).select('id').single();
+  }).select('id').limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ id: data.id });
+  res.json({ id: data && data.length ? data[0].id : null });
 });
 
 app.put('/tareas/:id', async (req, res) => {
-  const { estado, horaInicio, horaFin, tiempo } = req.body;
+  const { estado, horaInicio, horaFin } = req.body;
   const { id } = req.params;
+
+  let tiempo = null;
+  let localHoraInicio = horaInicio ? new Date(horaInicio) : null;
+  let localHoraFin = horaFin ? new Date(horaFin) : null;
+
+  if (estado === 'Finalizado' && localHoraInicio && localHoraFin) {
+    const diff = Math.floor((localHoraFin - localHoraInicio) / 1000);
+    const dias = Math.floor(diff / (24 * 3600));
+    const hrs = Math.floor((diff % (24 * 3600)) / 3600);
+    const min = Math.floor((diff % 3600) / 60);
+    const seg = diff % 60;
+    tiempo = `${dias}d ${hrs}h ${min}m ${seg}s`;
+  }
+
+  const zonaHora = new Date(new Date().getTime() - 6 * 60 * 60 * 1000);
 
   const { error } = await supabase
     .from('tareas')
-    .update({ estado, horaInicio, horaFin, tiempo })
+    .update({
+      estado,
+      horaInicio: estado === 'En proceso' ? zonaHora : horaInicio,
+      horaFin: estado === 'Finalizado' ? zonaHora : horaFin,
+      tiempo
+    })
     .eq('id', id);
 
   if (error) return res.status(500).json({ error: error.message });
@@ -134,12 +147,10 @@ app.put('/tareas/:id', async (req, res) => {
 app.delete('/tareas/:id', async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from('tareas').delete().eq('id', id);
-
   if (error) return res.status(500).json({ error: error.message });
   res.json({ mensaje: 'Tarea eliminada' });
 });
 
-// ───── Rutas de colaboradores ───────────────────────────────────
 app.get('/colaboradores', async (_req, res) => {
   const { data, error } = await supabase.from('colaboradores').select('*');
   if (error) return res.status(500).json({ error: error.message });
@@ -154,42 +165,34 @@ app.post('/colaboradores', async (req, res) => {
     .from('colaboradores')
     .insert({ nombre })
     .select('id, nombre')
-    .single();
+    .limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  res.json(data && data.length ? data[0] : {});
 });
 
 app.delete('/colaboradores/:id', async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from('colaboradores').delete().eq('id', id);
-
   if (error) return res.status(500).json({ error: error.message });
   res.json({ mensaje: 'Colaborador eliminado' });
 });
 
-// ───── Reporte: tareas no iniciadas ─────────────────────────────
 app.get('/reporte-no-iniciadas', async (req, res) => {
   const { colaborador } = req.query;
-
   let query = supabase.from('tareas')
     .select('id, descripcion, colaborador, fechaEntrega')
     .eq('estado', 'No iniciada');
-
   if (colaborador) query = query.eq('colaborador', colaborador);
-
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
-
   res.json(data);
 });
 
-// ───── Reporte: resumen por colaborador ─────────────────────────
 app.get('/reporte-resumen', async (_req, res) => {
   const { data: tareas, error } = await supabase.from('tareas').select('*');
   if (error) return res.status(500).json({ error: error.message });
 
-  // Agrupar en memoria
   const resumen = {};
   tareas.forEach(t => {
     if (!resumen[t.colaborador]) {
@@ -201,18 +204,17 @@ app.get('/reporte-resumen', async (_req, res) => {
       };
     }
     if (t.estado === 'No iniciada') resumen[t.colaborador].noIniciadas++;
-    if (t.estado === 'En proceso')  resumen[t.colaborador].enProceso++;
-    if (t.estado === 'Finalizado')  {
+    if (t.estado === 'En proceso') resumen[t.colaborador].enProceso++;
+    if (t.estado === 'Finalizado') {
       resumen[t.colaborador].finalizadas++;
       const entrega = new Date(t.fechaEntrega);
-      const fin     = new Date(t.horaFin);
-      if (fin <= entrega.setHours(23,59,59,999)) {
+      const fin = new Date(t.horaFin);
+      if (fin <= entrega.setHours(23, 59, 59, 999)) {
         resumen[t.colaborador].puntuales++;
       }
     }
   });
 
-  // Formatear
   const resultado = Object.entries(resumen).map(([colaborador, r]) => {
     const porcentaje = r.finalizadas ? (r.puntuales / r.finalizadas) : 0;
     return {
@@ -226,7 +228,6 @@ app.get('/reporte-resumen', async (_req, res) => {
   res.json(resultado);
 });
 
-// ───── Iniciar servidor ─────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
 });
