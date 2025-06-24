@@ -196,7 +196,7 @@ function Tareas() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-200 text-gray-900">
+    <div className="min-h-screen bg-gray-800 text-white">
       <main className="p-6 overflow-x-auto">
         <form onSubmit={crearTarea} className="mb-4 space-x-2">
           <input
@@ -206,7 +206,7 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
             }
-            className="px-3 py-1 rounded"
+            className="px-3 py-1 rounded text-black"
             required
           />
           <select
@@ -214,7 +214,7 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, colaborador: e.target.value })
             }
-            className="px-3 py-1 rounded"
+            className="px-3 py-1 rounded text-black"
           >
             {colaboradores.map((c) => (
               <option key={c.id} value={c.nombre}>
@@ -228,56 +228,85 @@ function Tareas() {
             onChange={(e) =>
               setNuevaTarea({ ...nuevaTarea, fechaEntrega: e.target.value })
             }
-            className="px-3 py-1 rounded"
+            className="px-3 py-1 rounded text-black"
           />
-          <button type="submit" className="px-3 py-1 bg-blue-500 text-white rounded">
+          <button
+            type="submit"
+            className="px-3 py-1 bg-blue-500 text-white rounded"
+          >
             {editandoId ? "Actualizar" : "Crear"}
           </button>
         </form>
 
-        <table className="w-full border border-gray-700 bg-gray-800 rounded shadow text-sm">
+        <table className="w-full border border-gray-700 bg-gray-900 rounded shadow text-sm">
           <thead>
             <tr className="text-white">
               <th className="px-3 py-2">ID</th>
-              <th className="px-3 py-2">Descripción</th>
+              <th className="px-3 py-2">Tarea</th>
               <th className="px-3 py-2">Colaborador</th>
-              <th className="px-3 py-2">Fecha Entrega</th>
+              <th className="px-3 py-2">Iniciar</th>
+              <th className="px-3 py-2">Terminar</th>
               <th className="px-3 py-2">Estado</th>
-              {rol === "admin" && <th className="px-3 py-2">Tiempo</th>}
-              <th className="px-3 py-2">Acciones</th>
+              <th className="px-3 py-2">Inicio</th>
+              <th className="px-3 py-2">Fin</th>
+              <th className="px-3 py-2">Tiempo</th>
+              <th className="px-3 py-2">Entrega</th>
+              <th className="px-3 py-2">Editar</th>
+              <th className="px-3 py-2">Eliminar</th>
             </tr>
           </thead>
           <tbody>
-            {Array.isArray(tareas) &&
-              tareas.map((t) => (
-                <tr
-                  key={t.id}
-                  className="text-center border-t border-gray-700 hover:bg-gray-700 text-white"
-                >
-                  <td className="px-3 py-2">{t.id}</td>
-                  <td className="px-3 py-2">{t.descripcion}</td>
-                  <td className="px-3 py-2">{t.colaborador}</td>
-                  <td className="px-3 py-2">{t.fechaEntrega}</td>
-                  <td className="px-3 py-2">{t.estado}</td>
-                  {rol === "admin" && (
-                    <td className="px-3 py-2">{formatearTiempo(t.tiempo)}</td>
+            {tareas.map((t) => (
+              <tr
+                key={t.id}
+                className="text-center border-t border-gray-700 hover:bg-gray-800 text-white"
+              >
+                <td className="px-3 py-2">{t.id}</td>
+                <td className="px-3 py-2">{t.descripcion}</td>
+                <td className="px-3 py-2">{t.colaborador}</td>
+                <td className="px-3 py-2">
+                  {t.estado === "No iniciada" && (
+                    <button
+                      onClick={() => iniciarTarea(t.id)}
+                      className="bg-green-600 hover:bg-green-700 px-2 py-1 rounded text-white"
+                    >
+                      Iniciar
+                    </button>
                   )}
-                  <td className="px-3 py-2 space-x-2">
-                    {t.estado === "No iniciada" && (
-                      <button onClick={() => iniciarTarea(t.id)}>Iniciar</button>
-                    )}
-                    {t.estado === "En proceso" && (
-                      <button onClick={() => terminarTarea(t.id)}>Terminar</button>
-                    )}
-                    {rol === "admin" && (
-                      <>
-                        <button onClick={() => editarTarea(t)}>Editar</button>
-                        <button onClick={() => eliminarTarea(t.id)}>Eliminar</button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                </td>
+                <td className="px-3 py-2">
+                  {t.estado === "En proceso" && (
+                    <button
+                      onClick={() => terminarTarea(t.id)}
+                      className="bg-yellow-500 hover:bg-yellow-600 px-2 py-1 rounded"
+                    >
+                      Terminar
+                    </button>
+                  )}
+                </td>
+                <td className="px-3 py-2">{t.estado}</td>
+                <td className="px-3 py-2">{t.horaInicio?.split("T")[1]?.slice(0, 8)}</td>
+                <td className="px-3 py-2">{t.horaFin?.split("T")[1]?.slice(0, 8)}</td>
+                <td className="px-3 py-2">{formatearTiempo(t.tiempo)}</td>
+                <td className="px-3 py-2">{t.fechaEntrega}</td>
+                <td className="px-3 py-2">
+                  <button
+                    onClick={() => editarTarea(t)}
+                    className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-white"
+                  >
+                    ✎
+                  </button>
+                </td>
+                <td className="px-3 py-2">
+                  <button
+                    onClick={() => eliminarTarea(t.id)}
+                    className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-white"
+                  >
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </main>
