@@ -32,39 +32,35 @@ export default function TareasFinalizadas() {
 
   const generarWord = async () => {
     try {
-      const doc = new Document({
-        creator: "Control de Tareas",
-        title: "Reporte de Tareas Finalizadas",
-        description: "Tareas finalizadas archivadas"
-      });
-
-      doc.addSection({
-        properties: {},
-        children: [
+      const contenido = [
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "📋 Reporte de Tareas Finalizadas",
+              bold: true,
+              size: 32,
+              break: 1
+            }),
+          ],
+          spacing: { after: 300 }
+        }),
+        ...tareas.map(t =>
           new Paragraph({
+            spacing: { after: 200 },
             children: [
-              new TextRun({
-                text: "📋 Reporte de Tareas Finalizadas",
-                bold: true,
-                size: 28,
-                break: 1
-              })
-            ],
-          }),
-          ...tareas.map(t =>
-            new Paragraph({
-              spacing: { after: 150 },
-              children: [
-                new TextRun({ text: `Tarea: ${t.descripcion}`, bold: true, break: 1 }),
-                new TextRun({ text: `Colaborador: ${t.colaborador}`, break: 1 }),
-                new TextRun({ text: `Estado: ${t.estado}`, break: 1 }),
-                new TextRun({ text: `Inicio: ${formatearHora(t.horaInicio)}`, break: 1 }),
-                new TextRun({ text: `Fin: ${formatearHora(t.horaFin)}`, break: 1 }),
-                new TextRun({ text: `Duración: ${formatearTiempo(t.tiempo)}`, break: 1 }),
-              ]
-            })
-          )
-        ]
+              new TextRun({ text: `Tarea: ${t.descripcion}`, bold: true, break: 1 }),
+              new TextRun({ text: `Colaborador: ${t.colaborador}`, break: 1 }),
+              new TextRun({ text: `Estado: ${t.estado}`, break: 1 }),
+              new TextRun({ text: `Inicio: ${formatearHora(t.horaInicio)}`, break: 1 }),
+              new TextRun({ text: `Fin: ${formatearHora(t.horaFin)}`, break: 1 }),
+              new TextRun({ text: `Duración: ${formatearTiempo(t.tiempo)}`, break: 1 }),
+            ]
+          })
+        )
+      ];
+
+      const doc = new Document({
+        sections: [{ properties: {}, children: contenido }]
       });
 
       const blob = await Packer.toBlob(doc);
