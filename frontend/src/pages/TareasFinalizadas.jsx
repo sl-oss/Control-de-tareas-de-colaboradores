@@ -4,13 +4,10 @@ export default function TareasFinalizadas() {
   const [tareas, setTareas] = useState([]);
 
   useEffect(() => {
-    fetch("https://control-de-tareas-de-colaboradores.onrender.com/tareas")
+    fetch("https://control-de-tareas-de-colaboradores.onrender.com/tareas/finalizadas")
       .then((res) => res.json())
       .then((data) => {
-        const finalizadas = data.filter(
-          (t) => t.estado === "Finalizado" || t.estado === "Archivado"
-        );
-        setTareas(finalizadas);
+        setTareas(data);
       });
   }, []);
 
