@@ -137,14 +137,14 @@ function Tareas() {
   };
 
   const iniciarTarea = async (id) => {
-    const ahora = new Date();
+    const ahora = getHoraLocalElSalvador();
 
     const res = await fetch(`${API}/tareas/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         estado: "En proceso",
-        horaInicio: ahora.toISOString(),
+        horaInicio: ahora,
         horaFin: null,
         tiempo: null,
       }),
@@ -153,7 +153,7 @@ function Tareas() {
     if (res.ok) {
       setTareas((prev) =>
         prev.map((t) =>
-          t.id === id ? { ...t, estado: "En proceso", horaInicio: ahora.toISOString() } : t
+          t.id === id ? { ...t, estado: "En proceso", horaInicio: ahora } : t
         )
       );
     } else {
@@ -168,8 +168,9 @@ function Tareas() {
       return;
     }
 
+    const ahora = getHoraLocalElSalvador();
     const inicio = new Date(tarea.horaInicio);
-    const fin = new Date();
+    const fin = new Date(ahora);
     const diffMin = Math.round((fin - inicio) / 60000);
 
     const res = await fetch(`${API}/tareas/${id}`, {
@@ -177,8 +178,8 @@ function Tareas() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         estado: "Finalizado",
-        horaInicio: inicio.toISOString(),
-        horaFin: fin.toISOString(),
+        horaInicio: tarea.horaInicio,
+        horaFin: ahora,
         tiempo: diffMin,
       }),
     });
@@ -187,7 +188,7 @@ function Tareas() {
       setTareas((prev) =>
         prev.map((t) =>
           t.id === id
-            ? { ...t, estado: "Finalizado", horaFin: fin.toISOString(), tiempo: diffMin }
+            ? { ...t, estado: "Finalizado", horaFin: ahora, tiempo: diffMin }
             : t
         )
       );
