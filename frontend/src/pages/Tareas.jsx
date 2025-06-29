@@ -155,7 +155,6 @@ function Tareas() {
 
     const ahora = getHoraLocalElSalvador();
     const inicio = new Date(tarea.horaInicio);
-    inicio.setMinutes(inicio.getMinutes() + inicio.getTimezoneOffset());
     const fin = new Date(ahora);
     const diffMin = Math.round((fin.getTime() - inicio.getTime()) / 60000);
 
