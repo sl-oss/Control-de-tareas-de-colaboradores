@@ -45,7 +45,7 @@ function Tareas() {
   const getHoraLocalElSalvador = () => {
     const ahora = new Date();
     ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
-    return ahora.toISOString().slice(0, 19); // yyyy-mm-ddTHH:MM:SS
+    return ahora.toISOString().slice(0, 19);
   };
 
   const formatearTiempo = (minutos) => {
@@ -69,10 +69,15 @@ function Tareas() {
       ? String(nuevaTarea.fechaEntrega).slice(0, 10)
       : new Date().toISOString().slice(0, 10);
 
+    const tareaOriginal = tareas.find((t) => t.id === editandoId);
+
     const tareaData = {
       descripcion: nuevaTarea.descripcion,
       colaborador: nuevaTarea.colaborador,
       fechaEntrega: fechaEntregaFormateada,
+      horaInicio: tareaOriginal?.horaInicio || null,
+      horaFin: tareaOriginal?.horaFin || null,
+      tiempo: tareaOriginal?.tiempo || null,
     };
 
     if (editandoId) {
@@ -107,9 +112,6 @@ function Tareas() {
           id: data.id,
           ...tareaData,
           estado: "No iniciada",
-          horaInicio: null,
-          horaFin: null,
-          tiempo: null,
         },
       ]);
     }
