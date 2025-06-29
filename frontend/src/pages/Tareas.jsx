@@ -44,23 +44,8 @@ function Tareas() {
 
   const getHoraLocalElSalvador = () => {
     const ahora = new Date();
-    const formatter = new Intl.DateTimeFormat("sv-SE", {
-      timeZone: "America/El_Salvador",
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-
-    const partes = formatter.formatToParts(ahora).reduce((acc, part) => {
-      acc[part.type] = part.value;
-      return acc;
-    }, {});
-
-    return `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}:${partes.second}.000Z`;
+    ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+    return ahora.toISOString().slice(0, 19); // yyyy-mm-ddTHH:MM:SS
   };
 
   const formatearTiempo = (minutos) => {
@@ -170,8 +155,9 @@ function Tareas() {
 
     const ahora = getHoraLocalElSalvador();
     const inicio = new Date(tarea.horaInicio);
+    inicio.setMinutes(inicio.getMinutes() + inicio.getTimezoneOffset());
     const fin = new Date(ahora);
-    const diffMin = Math.abs(Math.round((fin.getTime() - inicio.getTime()) / 60000));
+    const diffMin = Math.round((fin.getTime() - inicio.getTime()) / 60000);
 
     const res = await fetch(`${API}/tareas/${id}`, {
       method: "PUT",
