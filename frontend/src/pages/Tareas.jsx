@@ -214,8 +214,37 @@ function Tareas() {
   return (
     <div className="min-h-screen bg-gray-200 text-gray-900">
       <main className="p-6 overflow-x-auto">
-        {/* Formulario y tablas divididas en activas y finalizadas */}
-        {/* Código actualizado como en la respuesta previa */}
+        {tareasActivas.length === 0 && (
+          <p className="text-center text-gray-600 my-4">
+            No hay tareas activas por el momento.
+          </p>
+        )}
+
+        {tareasActivas.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-lg font-bold mb-2">Tareas Activas</h2>
+            <ul className="bg-white rounded shadow divide-y">
+              {tareasActivas.map((t) => (
+                <li key={t.id} className="p-3">
+                  {t.descripcion} - {t.colaborador} - {t.estado}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {tareasFinalizadas.length > 0 && (
+          <div>
+            <h2 className="text-lg font-bold mt-6 mb-2">Tareas Finalizadas</h2>
+            <ul className="bg-white rounded shadow divide-y">
+              {tareasFinalizadas.map((t) => (
+                <li key={t.id} className="p-3 text-gray-500">
+                  {t.descripcion} - {t.colaborador} - {t.estado}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </main>
     </div>
   );
