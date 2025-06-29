@@ -43,10 +43,9 @@ function Tareas() {
   }, []);
 
   const getHoraLocalElSalvador = () => {
-    const fecha = new Date();
-    return new Date(
-      fecha.toLocaleString("en-US", { timeZone: "America/El_Salvador" })
-    ).toISOString();
+    const now = new Date();
+    const elSalvadorTime = now.toLocaleString("en-US", { timeZone: "America/El_Salvador" });
+    return new Date(elSalvadorTime).toISOString();
   };
 
   const formatearTiempo = (minutos) => {
@@ -198,50 +197,48 @@ function Tareas() {
   return (
     <div className="min-h-screen bg-gray-200 text-gray-900">
       <main className="p-6 overflow-x-auto">
-        {rol === "admin" && (
-          <form
-            onSubmit={crearTarea}
-            className="mb-6 flex flex-wrap gap-2 bg-blue-600 p-4 rounded-lg text-white shadow"
+        <form
+          onSubmit={crearTarea}
+          className="mb-6 flex flex-wrap gap-2 bg-blue-600 p-4 rounded-lg text-white shadow"
+        >
+          <input
+            type="text"
+            placeholder="Descripción"
+            value={nuevaTarea.descripcion}
+            onChange={(e) =>
+              setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
+            }
+            className="px-3 py-1 rounded text-black"
+            required
+          />
+          <select
+            value={nuevaTarea.colaborador}
+            onChange={(e) =>
+              setNuevaTarea({ ...nuevaTarea, colaborador: e.target.value })
+            }
+            className="px-3 py-1 rounded text-black"
           >
-            <input
-              type="text"
-              placeholder="Descripción"
-              value={nuevaTarea.descripcion}
-              onChange={(e) =>
-                setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
-              }
-              className="px-3 py-1 rounded text-black"
-              required
-            />
-            <select
-              value={nuevaTarea.colaborador}
-              onChange={(e) =>
-                setNuevaTarea({ ...nuevaTarea, colaborador: e.target.value })
-              }
-              className="px-3 py-1 rounded text-black"
-            >
-              {colaboradores.map((c) => (
-                <option key={c.id} value={c.nombre}>
-                  {c.nombre}
-                </option>
-              ))}
-            </select>
-            <input
-              type="date"
-              value={nuevaTarea.fechaEntrega}
-              onChange={(e) =>
-                setNuevaTarea({ ...nuevaTarea, fechaEntrega: e.target.value })
-              }
-              className="px-3 py-1 rounded text-black"
-            />
-            <button
-              type="submit"
-              className="px-4 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              {editandoId ? "Actualizar" : "Crear"}
-            </button>
-          </form>
-        )}
+            {colaboradores.map((c) => (
+              <option key={c.id} value={c.nombre}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={nuevaTarea.fechaEntrega}
+            onChange={(e) =>
+              setNuevaTarea({ ...nuevaTarea, fechaEntrega: e.target.value })
+            }
+            className="px-3 py-1 rounded text-black"
+          />
+          <button
+            type="submit"
+            className="px-4 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            {editandoId ? "Actualizar" : "Crear"}
+          </button>
+        </form>
 
         <table className="w-full border border-gray-300 bg-white rounded shadow text-sm">
           <thead className="bg-blue-100 text-gray-800">
