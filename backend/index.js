@@ -19,28 +19,15 @@ const supabase = createClient(
 app.use(cors());
 app.use(express.json());
 
-// Seed inicial de usuarios y colaboradores
+// 🔁 Seed de usuarios y colaboradores
 (async () => {
   const usuariosSeed = [
-    {
-      usuario: 'rodpineda15@gmail.com',
-      contraseña: 'Ganaroganarx100pre',
-      rol: 'admin'
-    },
-    {
-      usuario: 'operaciones.paconsultores@gmail.com',
-      contraseña: 'EquipoPA2025',
-      rol: 'colaborador'
-    }
+    { usuario: 'rodpineda15@gmail.com', contraseña: 'Ganaroganarx100pre', rol: 'admin' },
+    { usuario: 'operaciones.paconsultores@gmail.com', contraseña: 'EquipoPA2025', rol: 'colaborador' }
   ];
 
   for (const u of usuariosSeed) {
-    const { data } = await supabase
-      .from('usuarios')
-      .select('id')
-      .eq('usuario', u.usuario)
-      .limit(1);
-
+    const { data } = await supabase.from('usuarios').select('id').eq('usuario', u.usuario).limit(1);
     if (!data || data.length === 0) {
       await supabase.from('usuarios').insert({
         usuario: u.usuario,
@@ -59,106 +46,93 @@ app.use(express.json());
   ];
 
   for (const nombre of colaboradoresSeed) {
-    const { data } = await supabase
-      .from('colaboradores')
-      .select('id')
-      .eq('nombre', nombre)
-      .limit(1);
-
+    const { data } = await supabase.from('colaboradores').select('id').eq('nombre', nombre).limit(1);
     if (!data || data.length === 0) {
       await supabase.from('colaboradores').insert({ nombre });
     }
   }
 })();
 
-// Login
+// 🔐 Login
 app.post('/login', async (req, res) => {
   const { usuario, contraseña } = req.body;
-  const { data, error } = await supabase
-    .from('usuarios')
-    .select('*')
-    .eq('usuario', usuario)
-    .limit(1);
+  const { data, error } = await supabase.from('usuarios').select('*').eq('usuario', usuario).limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
 
-  const user = data && data.length ? data[0] : null;
+  const user = data?.[0];
   if (!user || !bcrypt.compareSync(contraseña, user.contraseña)) {
     return res.status(401).json({ error: 'Credenciales inválidas' });
   }
 
-  const token = jwt.sign({ usuario: user.usuario, rol: user.rol }, SECRET, {
-    expiresIn: '1h'
-  });
+  const token = jwt.sign({ usuario: user.usuario, rol: user.rol }, SECRET, { expiresIn: '1h' });
   res.json({ token, rol: user.rol });
 });
 
-// Obtener todas las tareas
+// 📄 Obtener todas las tareas
 app.get('/tareas', async (_req, res) => {
   const { data, error } = await supabase.from('tareas').select('*');
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// Crear tarea
+// ➕ Crear tarea
 app.post('/tareas', async (req, res) => {
   const { descripcion, colaborador, fechaEntrega } = req.body;
   const { data, error } = await supabase
     .from('tareas')
-    .insert({
-      descripcion,
-      colaborador,
-      fechaEntrega,
-      estado: 'No iniciada'
-    })
+    .insert({ descripcion, colaborador, fechaEntrega, estado: 'No iniciada' })
     .select('id')
     .limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ id: data && data.length ? data[0].id : null });
+  res.json({ id: data?.[0]?.id || null });
 });
 
-// ✅ CORREGIDO: Actualizar tarea solo con los campos enviados
+// ✏️ Actualizar tarea (todos los campos posibles)
 app.put('/tareas/:id', async (req, res) => {
   const { id } = req.params;
-  const campos = [
-    'descripcion',
-    'colaborador',
-    'fechaEntrega',
-    'estado',
-    'horaInicio',
-    'horaFin',
-    'tiempo'
-  ];
+  const {
+    descripcion,
+    colaborador,
+    fechaEntrega,
+    estado,
+    horaInicio,
+    horaFin,
+    tiempo
+  } = req.body;
 
-  const actualizacion = {};
-  for (const campo of campos) {
-    if (req.body[campo] !== undefined) {
-      actualizacion[campo] = req.body[campo];
-    }
-  }
+  const actualizacion = {
+    ...(descripcion !== undefined && { descripcion }),
+    ...(colaborador !== undefined && { colaborador }),
+    ...(fechaEntrega !== undefined && { fechaEntrega }),
+    ...(estado !== undefined && { estado }),
+    horaInicio: horaInicio ?? null,
+    horaFin: horaFin ?? null,
+    tiempo: tiempo ?? null
+  };
 
   const { error } = await supabase.from('tareas').update(actualizacion).eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ mensaje: 'Tarea actualizada' });
+  res.json({ mensaje: 'Tarea actualizada correctamente' });
 });
 
-// Eliminar tarea
+// 🗑️ Eliminar tarea
 app.delete('/tareas/:id', async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from('tareas').delete().eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ mensaje: 'Tarea eliminada' });
+  res.json({ mensaje: 'Tarea eliminada correctamente' });
 });
 
-// Obtener colaboradores
+// 👥 Obtener colaboradores
 app.get('/colaboradores', async (_req, res) => {
   const { data, error } = await supabase.from('colaboradores').select('*');
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// Crear colaborador
+// ➕ Crear colaborador
 app.post('/colaboradores', async (req, res) => {
   const { nombre } = req.body;
   if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
@@ -170,18 +144,18 @@ app.post('/colaboradores', async (req, res) => {
     .limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data && data.length ? data[0] : {});
+  res.json(data?.[0] || {});
 });
 
-// Eliminar colaborador
+// 🗑️ Eliminar colaborador
 app.delete('/colaboradores/:id', async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from('colaboradores').delete().eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ mensaje: 'Colaborador eliminado' });
+  res.json({ mensaje: 'Colaborador eliminado correctamente' });
 });
 
-// Reporte tareas no iniciadas
+// 📊 Reporte tareas no iniciadas
 app.get('/reporte-no-iniciadas', async (req, res) => {
   const { colaborador } = req.query;
   let query = supabase.from('tareas')
@@ -195,7 +169,7 @@ app.get('/reporte-no-iniciadas', async (req, res) => {
   res.json(data);
 });
 
-// Reporte resumen
+// 📊 Reporte resumen
 app.get('/reporte-resumen', async (_req, res) => {
   const { data: tareas, error } = await supabase.from('tareas').select('*');
   if (error) return res.status(500).json({ error: error.message });
@@ -235,6 +209,7 @@ app.get('/reporte-resumen', async (_req, res) => {
   res.json(resultado);
 });
 
+// 🚀 Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
 });
