@@ -78,6 +78,7 @@ function Tareas() {
       horaInicio: tareaOriginal?.horaInicio || null,
       horaFin: tareaOriginal?.horaFin || null,
       tiempo: tareaOriginal?.tiempo || null,
+      estado: tareaOriginal?.estado || "No iniciada",
     };
 
     if (editandoId) {
@@ -111,7 +112,6 @@ function Tareas() {
         {
           id: data.id,
           ...tareaData,
-          estado: "No iniciada",
         },
       ]);
     }
