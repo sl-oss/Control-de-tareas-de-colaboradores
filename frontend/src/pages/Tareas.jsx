@@ -31,8 +31,14 @@ function Tareas() {
       fetch(`${API}/tareas`)
         .then((res) => res.json())
         .then((data) => {
-          if (Array.isArray(data)) setTareas(data);
-          else console.error("Las tareas no son un array válido");
+          console.log("Tareas recibidas:", data);
+          if (Array.isArray(data.data)) {
+            setTareas(data.data);
+          } else if (Array.isArray(data)) {
+            setTareas(data);
+          } else {
+            console.error("Formato inesperado de respuesta:", data);
+          }
         })
         .catch(() => console.error("Error al cargar tareas"));
     };
