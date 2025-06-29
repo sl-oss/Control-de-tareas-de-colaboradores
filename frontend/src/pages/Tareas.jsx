@@ -43,9 +43,24 @@ function Tareas() {
   }, []);
 
   const getHoraLocalElSalvador = () => {
-    const now = new Date();
-    const elSalvadorTime = now.toLocaleString("en-US", { timeZone: "America/El_Salvador" });
-    return new Date(elSalvadorTime).toISOString();
+    const ahora = new Date();
+    const formatter = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "America/El_Salvador",
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+
+    const partes = formatter.formatToParts(ahora).reduce((acc, part) => {
+      acc[part.type] = part.value;
+      return acc;
+    }, {});
+
+    return `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}:${partes.second}.000Z`;
   };
 
   const formatearTiempo = (minutos) => {
@@ -249,7 +264,7 @@ function Tareas() {
               <th className="px-3 py-2">Iniciar</th>
               <th className="px-3 py-2">Terminar</th>
               <th className="px-3 py-2">Estado</th>
-              {rol === "admin" && (
+              {(rol === "admin") && (
                 <>
                   <th className="px-3 py-2">Inicio</th>
                   <th className="px-3 py-2">Fin</th>
@@ -258,7 +273,9 @@ function Tareas() {
               )}
               <th className="px-3 py-2">Entrega</th>
               <th className="px-3 py-2">Editar</th>
-              {rol === "admin" && <th className="px-3 py-2">Eliminar</th>}
+              {(rol === "admin") && (
+                <th className="px-3 py-2">Eliminar</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -291,7 +308,7 @@ function Tareas() {
                   )}
                 </td>
                 <td className="px-3 py-2">{t.estado}</td>
-                {rol === "admin" && (
+                {(rol === "admin") && (
                   <>
                     <td className="px-3 py-2">{t.horaInicio?.split("T")[1]?.slice(0, 8)}</td>
                     <td className="px-3 py-2">{t.horaFin?.split("T")[1]?.slice(0, 8)}</td>
@@ -307,7 +324,7 @@ function Tareas() {
                     ✎
                   </button>
                 </td>
-                {rol === "admin" && (
+                {(rol === "admin") && (
                   <td className="px-3 py-2">
                     <button
                       onClick={() => eliminarTarea(t.id)}
