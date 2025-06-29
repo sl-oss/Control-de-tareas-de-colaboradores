@@ -31,14 +31,8 @@ function Tareas() {
       fetch(`${API}/tareas`)
         .then((res) => res.json())
         .then((data) => {
-          console.log("Tareas recibidas:", data);
-          if (Array.isArray(data.data)) {
-            setTareas(data.data);
-          } else if (Array.isArray(data)) {
-            setTareas(data);
-          } else {
-            console.error("Formato inesperado de respuesta:", data);
-          }
+          if (Array.isArray(data)) setTareas(data);
+          else console.error("Las tareas no son un array válido");
         })
         .catch(() => console.error("Error al cargar tareas"));
     };
@@ -48,11 +42,11 @@ function Tareas() {
     return () => clearInterval(intervalo);
   }, []);
 
-  const ajustarHora = (fechaUTC) => {
-    if (!fechaUTC) return "-";
-    const fecha = new Date(fechaUTC);
-    fecha.setHours(fecha.getHours() - 6);
-    return fecha.toLocaleTimeString("es-SV", { hour12: false });
+  const getHoraLocalElSalvador = () => {
+    const fecha = new Date();
+    return new Date(
+      fecha.toLocaleString("en-US", { timeZone: "America/El_Salvador" })
+    ).toISOString();
   };
 
   const formatearTiempo = (minutos) => {
@@ -60,13 +54,6 @@ function Tareas() {
     const hrs = Math.floor(minutos / 60);
     const mins = minutos % 60;
     return hrs > 0 ? `${hrs} h ${mins} min` : `${mins} min`;
-  };
-
-  const getHoraLocalElSalvador = () => {
-    const fecha = new Date();
-    return new Date(
-      fecha.toLocaleString("en-US", { timeZone: "America/El_Salvador" })
-    ).toISOString();
   };
 
   const crearTarea = async (e) => {
@@ -208,43 +195,90 @@ function Tareas() {
     setEditandoId(tarea.id);
   };
 
-  const tareasActivas = tareas.filter((t) => t.estado !== "Finalizado");
-  const tareasFinalizadas = tareas.filter((t) => t.estado === "Finalizado");
-
   return (
     <div className="min-h-screen bg-gray-200 text-gray-900">
       <main className="p-6 overflow-x-auto">
-        {tareasActivas.length === 0 && (
-          <p className="text-center text-gray-600 my-4">
-            No hay tareas activas por el momento.
-          </p>
-        )}
-
-        {tareasActivas.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-lg font-bold mb-2">Tareas Activas</h2>
-            <ul className="bg-white rounded shadow divide-y">
-              {tareasActivas.map((t) => (
-                <li key={t.id} className="p-3">
-                  {t.descripcion} - {t.colaborador} - {t.estado}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {tareasFinalizadas.length > 0 && (
-          <div>
-            <h2 className="text-lg font-bold mt-6 mb-2">Tareas Finalizadas</h2>
-            <ul className="bg-white rounded shadow divide-y">
-              {tareasFinalizadas.map((t) => (
-                <li key={t.id} className="p-3 text-gray-500">
-                  {t.descripcion} - {t.colaborador} - {t.estado}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <table className="w-full border border-gray-300 bg-white rounded shadow text-sm">
+          <thead className="bg-blue-100 text-gray-800">
+            <tr>
+              <th className="px-3 py-2">#</th>
+              <th className="px-3 py-2">Tarea</th>
+              <th className="px-3 py-2">Colaborador</th>
+              <th className="px-3 py-2">Iniciar</th>
+              <th className="px-3 py-2">Terminar</th>
+              <th className="px-3 py-2">Estado</th>
+              {rol === "admin" && (
+                <>
+                  <th className="px-3 py-2">Inicio</th>
+                  <th className="px-3 py-2">Fin</th>
+                  <th className="px-3 py-2">Tiempo</th>
+                </>
+              )}
+              <th className="px-3 py-2">Entrega</th>
+              <th className="px-3 py-2">Editar</th>
+              {rol === "admin" && <th className="px-3 py-2">Eliminar</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {tareas.map((t, index) => (
+              <tr
+                key={t.id}
+                className="text-center border-t border-gray-200 hover:bg-gray-100"
+              >
+                <td className="px-3 py-2">{index + 1}</td>
+                <td className="px-3 py-2">{t.descripcion}</td>
+                <td className="px-3 py-2">{t.colaborador}</td>
+                <td className="px-3 py-2">
+                  {t.estado === "No iniciada" && (
+                    <button
+                      onClick={() => iniciarTarea(t.id)}
+                      className="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-white"
+                    >
+                      Iniciar
+                    </button>
+                  )}
+                </td>
+                <td className="px-3 py-2">
+                  {t.estado === "En proceso" && (
+                    <button
+                      onClick={() => terminarTarea(t.id)}
+                      className="bg-yellow-500 hover:bg-yellow-600 px-2 py-1 rounded"
+                    >
+                      Terminar
+                    </button>
+                  )}
+                </td>
+                <td className="px-3 py-2">{t.estado}</td>
+                {rol === "admin" && (
+                  <>
+                    <td className="px-3 py-2">{t.horaInicio?.split("T")[1]?.slice(0, 8)}</td>
+                    <td className="px-3 py-2">{t.horaFin?.split("T")[1]?.slice(0, 8)}</td>
+                    <td className="px-3 py-2">{formatearTiempo(t.tiempo)}</td>
+                  </>
+                )}
+                <td className="px-3 py-2">{t.fechaEntrega}</td>
+                <td className="px-3 py-2">
+                  <button
+                    onClick={() => editarTarea(t)}
+                    className="bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-white"
+                  >
+                    ✎
+                  </button>
+                </td>
+                {rol === "admin" && (
+                  <td className="px-3 py-2">
+                    <button
+                      onClick={() => eliminarTarea(t.id)}
+                      className="bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-white"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </main>
     </div>
   );
