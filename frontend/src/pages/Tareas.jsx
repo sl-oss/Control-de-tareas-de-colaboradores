@@ -44,10 +44,7 @@ function Tareas() {
 
   const getHoraLocalElSalvador = () => {
     const ahora = new Date();
-    const utc = ahora.getTime() + ahora.getTimezoneOffset() * 60000;
-    const offset = -6;
-    const localTime = new Date(utc + 3600000 * offset);
-    return localTime.toISOString();
+    return ahora.toLocaleString("sv-SE", { timeZone: "America/El_Salvador" }).replace(" ", "T") + ":00.000Z";
   };
 
   const formatearTiempo = (minutos) => {
