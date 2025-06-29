@@ -41,6 +41,10 @@ function Navbar() {
             <Link to="/resumen" className="hover:text-green-400 font-semibold transition">
               Resumen
             </Link>
+
+            <Link to="/finalizadas" className="hover:text-green-400 font-semibold transition">
+              Finalizadas
+            </Link>
           </>
         )}
       </div>
