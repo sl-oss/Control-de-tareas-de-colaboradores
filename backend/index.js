@@ -19,6 +19,7 @@ const supabase = createClient(
 app.use(cors());
 app.use(express.json());
 
+// Seed inicial de usuarios y colaboradores
 (async () => {
   const usuariosSeed = [
     {
@@ -70,6 +71,7 @@ app.use(express.json());
   }
 })();
 
+// Login
 app.post('/login', async (req, res) => {
   const { usuario, contraseña } = req.body;
   const { data, error } = await supabase
@@ -91,12 +93,14 @@ app.post('/login', async (req, res) => {
   res.json({ token, rol: user.rol });
 });
 
+// Obtener todas las tareas
 app.get('/tareas', async (_req, res) => {
   const { data, error } = await supabase.from('tareas').select('*');
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
+// Crear tarea
 app.post('/tareas', async (req, res) => {
   const { descripcion, colaborador, fechaEntrega } = req.body;
   const { data, error } = await supabase
@@ -114,22 +118,32 @@ app.post('/tareas', async (req, res) => {
   res.json({ id: data && data.length ? data[0].id : null });
 });
 
+// ✅ CORREGIDO: Actualizar tarea solo con los campos enviados
 app.put('/tareas/:id', async (req, res) => {
-  const { estado, horaInicio, horaFin, tiempo } = req.body;
   const { id } = req.params;
+  const campos = [
+    'descripcion',
+    'colaborador',
+    'fechaEntrega',
+    'estado',
+    'horaInicio',
+    'horaFin',
+    'tiempo'
+  ];
 
-  const actualizacion = {
-    estado,
-    horaInicio: horaInicio || null,
-    horaFin: horaFin || null,
-    tiempo: tiempo !== undefined ? tiempo : null
-  };
+  const actualizacion = {};
+  for (const campo of campos) {
+    if (req.body[campo] !== undefined) {
+      actualizacion[campo] = req.body[campo];
+    }
+  }
 
   const { error } = await supabase.from('tareas').update(actualizacion).eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ mensaje: 'Tarea actualizada' });
 });
 
+// Eliminar tarea
 app.delete('/tareas/:id', async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from('tareas').delete().eq('id', id);
@@ -137,12 +151,14 @@ app.delete('/tareas/:id', async (req, res) => {
   res.json({ mensaje: 'Tarea eliminada' });
 });
 
+// Obtener colaboradores
 app.get('/colaboradores', async (_req, res) => {
   const { data, error } = await supabase.from('colaboradores').select('*');
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
+// Crear colaborador
 app.post('/colaboradores', async (req, res) => {
   const { nombre } = req.body;
   if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
@@ -157,6 +173,7 @@ app.post('/colaboradores', async (req, res) => {
   res.json(data && data.length ? data[0] : {});
 });
 
+// Eliminar colaborador
 app.delete('/colaboradores/:id', async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from('colaboradores').delete().eq('id', id);
@@ -164,6 +181,7 @@ app.delete('/colaboradores/:id', async (req, res) => {
   res.json({ mensaje: 'Colaborador eliminado' });
 });
 
+// Reporte tareas no iniciadas
 app.get('/reporte-no-iniciadas', async (req, res) => {
   const { colaborador } = req.query;
   let query = supabase.from('tareas')
@@ -177,6 +195,7 @@ app.get('/reporte-no-iniciadas', async (req, res) => {
   res.json(data);
 });
 
+// Reporte resumen
 app.get('/reporte-resumen', async (_req, res) => {
   const { data: tareas, error } = await supabase.from('tareas').select('*');
   if (error) return res.status(500).json({ error: error.message });
