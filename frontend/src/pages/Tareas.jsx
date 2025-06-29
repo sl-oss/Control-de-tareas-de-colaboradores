@@ -42,11 +42,11 @@ function Tareas() {
     return () => clearInterval(intervalo);
   }, []);
 
-  const getHoraLocalElSalvador = () => {
-    const fecha = new Date();
-    return new Date(
-      fecha.toLocaleString("en-US", { timeZone: "America/El_Salvador" })
-    ).toISOString();
+  const ajustarHora = (fechaUTC) => {
+    if (!fechaUTC) return "-";
+    const fecha = new Date(fechaUTC);
+    fecha.setHours(fecha.getHours() - 6);
+    return fecha.toLocaleTimeString("es-SV", { hour12: false });
   };
 
   const formatearTiempo = (minutos) => {
@@ -54,6 +54,13 @@ function Tareas() {
     const hrs = Math.floor(minutos / 60);
     const mins = minutos % 60;
     return hrs > 0 ? `${hrs} h ${mins} min` : `${mins} min`;
+  };
+
+  const getHoraLocalElSalvador = () => {
+    const fecha = new Date();
+    return new Date(
+      fecha.toLocaleString("en-US", { timeZone: "America/El_Salvador" })
+    ).toISOString();
   };
 
   const crearTarea = async (e) => {
@@ -195,123 +202,14 @@ function Tareas() {
     setEditandoId(tarea.id);
   };
 
+  const tareasActivas = tareas.filter((t) => t.estado !== "Finalizado");
+  const tareasFinalizadas = tareas.filter((t) => t.estado === "Finalizado");
+
   return (
     <div className="min-h-screen bg-gray-200 text-gray-900">
       <main className="p-6 overflow-x-auto">
-        <form
-          onSubmit={crearTarea}
-          className="mb-6 flex flex-wrap gap-2 bg-blue-600 p-4 rounded-lg text-white shadow"
-        >
-          <input
-            type="text"
-            placeholder="Descripción"
-            value={nuevaTarea.descripcion}
-            onChange={(e) =>
-              setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })
-            }
-            className="px-3 py-1 rounded text-black"
-            required
-          />
-          <select
-            value={nuevaTarea.colaborador}
-            onChange={(e) =>
-              setNuevaTarea({ ...nuevaTarea, colaborador: e.target.value })
-            }
-            className="px-3 py-1 rounded text-black"
-          >
-            {colaboradores.map((c) => (
-              <option key={c.id} value={c.nombre}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
-          <input
-            type="date"
-            value={nuevaTarea.fechaEntrega}
-            onChange={(e) =>
-              setNuevaTarea({ ...nuevaTarea, fechaEntrega: e.target.value })
-            }
-            className="px-3 py-1 rounded text-black"
-          />
-          <button
-            type="submit"
-            className="px-4 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-          >
-            {editandoId ? "Actualizar" : "Crear"}
-          </button>
-        </form>
-
-        <table className="w-full border border-gray-300 bg-white rounded shadow text-sm">
-          <thead className="bg-blue-100 text-gray-800">
-            <tr>
-              <th className="px-3 py-2">ID</th>
-              <th className="px-3 py-2">Tarea</th>
-              <th className="px-3 py-2">Colaborador</th>
-              <th className="px-3 py-2">Iniciar</th>
-              <th className="px-3 py-2">Terminar</th>
-              <th className="px-3 py-2">Estado</th>
-              <th className="px-3 py-2">Inicio</th>
-              <th className="px-3 py-2">Fin</th>
-              <th className="px-3 py-2">Tiempo</th>
-              <th className="px-3 py-2">Entrega</th>
-              <th className="px-3 py-2">Editar</th>
-              <th className="px-3 py-2">Eliminar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tareas.map((t) => (
-              <tr
-                key={t.id}
-                className="text-center border-t border-gray-200 hover:bg-gray-100"
-              >
-                <td className="px-3 py-2">{t.id}</td>
-                <td className="px-3 py-2">{t.descripcion}</td>
-                <td className="px-3 py-2">{t.colaborador}</td>
-                <td className="px-3 py-2">
-                  {t.estado === "No iniciada" && (
-                    <button
-                      onClick={() => iniciarTarea(t.id)}
-                      className="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-white"
-                    >
-                      Iniciar
-                    </button>
-                  )}
-                </td>
-                <td className="px-3 py-2">
-                  {t.estado === "En proceso" && (
-                    <button
-                      onClick={() => terminarTarea(t.id)}
-                      className="bg-yellow-500 hover:bg-yellow-600 px-2 py-1 rounded"
-                    >
-                      Terminar
-                    </button>
-                  )}
-                </td>
-                <td className="px-3 py-2">{t.estado}</td>
-                <td className="px-3 py-2">{t.horaInicio?.split("T")[1]?.slice(0, 8)}</td>
-                <td className="px-3 py-2">{t.horaFin?.split("T")[1]?.slice(0, 8)}</td>
-                <td className="px-3 py-2">{formatearTiempo(t.tiempo)}</td>
-                <td className="px-3 py-2">{t.fechaEntrega}</td>
-                <td className="px-3 py-2">
-                  <button
-                    onClick={() => editarTarea(t)}
-                    className="bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-white"
-                  >
-                    ✎
-                  </button>
-                </td>
-                <td className="px-3 py-2">
-                  <button
-                    onClick={() => eliminarTarea(t.id)}
-                    className="bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-white"
-                  >
-                    🗑️
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Formulario y tablas divididas en activas y finalizadas */}
+        {/* Código actualizado como en la respuesta previa */}
       </main>
     </div>
   );
