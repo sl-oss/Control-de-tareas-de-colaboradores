@@ -89,9 +89,13 @@ app.post('/tareas', async (req, res) => {
   res.json({ id: data?.[0]?.id || null });
 });
 
-// ✏️ Actualizar tarea (todos los campos posibles)
+// ✏️ Actualizar tarea con log de depuración
 app.put('/tareas/:id', async (req, res) => {
   const { id } = req.params;
+
+  // 🪵 Log de depuración
+  console.log(`📝 PUT /tareas/${id} con datos:`, req.body);
+
   const {
     descripcion,
     colaborador,
@@ -113,7 +117,12 @@ app.put('/tareas/:id', async (req, res) => {
   };
 
   const { error } = await supabase.from('tareas').update(actualizacion).eq('id', id);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    console.error(`❌ Error actualizando tarea ${id}:`, error.message);
+    return res.status(500).json({ error: error.message });
+  }
+
+  console.log(`✅ Tarea ${id} actualizada correctamente`);
   res.json({ mensaje: 'Tarea actualizada correctamente' });
 });
 
