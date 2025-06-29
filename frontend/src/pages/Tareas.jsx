@@ -171,7 +171,7 @@ function Tareas() {
     const ahora = getHoraLocalElSalvador();
     const inicio = new Date(tarea.horaInicio);
     const fin = new Date(ahora);
-    const diffMin = Math.round((fin - inicio) / 60000);
+    const diffMin = Math.round(Math.abs(fin - inicio) / 60000);
 
     const res = await fetch(`${API}/tareas/${id}`, {
       method: "PUT",
