@@ -7,7 +7,9 @@ import Tareas from "./pages/Tareas";
 import Colaboradores from "./pages/Colaboradores";
 import ReporteSeguimiento from "./pages/ReporteSeguimiento";
 import ReporteNoIniciadas from "./pages/ReporteNoIniciadas";
-import ReporteResumen from "./pages/ReporteResumen"; // ➕ NUEVO
+import ReporteResumen from "./pages/ReporteResumen";
+import TareasFinalizadas from "./pages/TareasFinalizadas"; // ✅ NUEVO
+
 import ProtectedRoute from "./ProtectedRoute";
 import Navbar from "./components/Navbar";
 
@@ -61,12 +63,20 @@ function AppContent() {
           }
         />
 
-        {/* ➕ Nueva ruta para el reporte de resumen */}
         <Route
           path="/resumen"
           element={
             <ProtectedRoute>
               <ReporteResumen />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/finalizadas"
+          element={
+            <ProtectedRoute>
+              <TareasFinalizadas />
             </ProtectedRoute>
           }
         />

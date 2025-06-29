@@ -194,6 +194,18 @@ function Tareas() {
     }
   };
 
+  const archivarTarea = async (id) => {
+    const res = await fetch(`${API}/tareas/archivar/${id}`, {
+      method: "PUT",
+    });
+
+    if (res.ok) {
+      setTareas((prev) => prev.filter((t) => t.id !== id));
+    } else {
+      alert("Error al archivar la tarea");
+    }
+  };
+
   const editarTarea = (tarea) => {
     setNuevaTarea({
       descripcion: tarea.descripcion,
@@ -248,7 +260,6 @@ function Tareas() {
             {editandoId ? "Actualizar" : "Crear"}
           </button>
         </form>
-
         <table className="w-full border border-gray-300 bg-white rounded shadow text-sm">
           <thead className="bg-blue-100 text-gray-800">
             <tr>
@@ -258,7 +269,7 @@ function Tareas() {
               <th className="px-3 py-2">Iniciar</th>
               <th className="px-3 py-2">Terminar</th>
               <th className="px-3 py-2">Estado</th>
-              {(rol === "admin") && (
+              {rol === "admin" && (
                 <>
                   <th className="px-3 py-2">Inicio</th>
                   <th className="px-3 py-2">Fin</th>
@@ -267,17 +278,13 @@ function Tareas() {
               )}
               <th className="px-3 py-2">Entrega</th>
               <th className="px-3 py-2">Editar</th>
-              {(rol === "admin") && (
-                <th className="px-3 py-2">Eliminar</th>
-              )}
+              {rol === "admin" && <th className="px-3 py-2">Eliminar</th>}
+              {rol === "admin" && <th className="px-3 py-2">Archivar</th>}
             </tr>
           </thead>
           <tbody>
             {tareas.map((t, index) => (
-              <tr
-                key={t.id}
-                className="text-center border-t border-gray-200 hover:bg-gray-100"
-              >
+              <tr key={t.id} className="text-center border-t border-gray-200 hover:bg-gray-100">
                 <td className="px-3 py-2">{index + 1}</td>
                 <td className="px-3 py-2">{t.descripcion}</td>
                 <td className="px-3 py-2">{t.colaborador}</td>
@@ -302,7 +309,7 @@ function Tareas() {
                   )}
                 </td>
                 <td className="px-3 py-2">{t.estado}</td>
-                {(rol === "admin") && (
+                {rol === "admin" && (
                   <>
                     <td className="px-3 py-2">{t.horaInicio?.split("T")[1]?.slice(0, 8)}</td>
                     <td className="px-3 py-2">{t.horaFin?.split("T")[1]?.slice(0, 8)}</td>
@@ -318,13 +325,23 @@ function Tareas() {
                     ✎
                   </button>
                 </td>
-                {(rol === "admin") && (
+                {rol === "admin" && (
                   <td className="px-3 py-2">
                     <button
                       onClick={() => eliminarTarea(t.id)}
                       className="bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-white"
                     >
                       🗑️
+                    </button>
+                  </td>
+                )}
+                {rol === "admin" && t.estado === "Finalizado" && (
+                  <td className="px-3 py-2">
+                    <button
+                      onClick={() => archivarTarea(t.id)}
+                      className="bg-purple-500 hover:bg-purple-600 px-2 py-1 rounded text-white"
+                    >
+                      📦
                     </button>
                   </td>
                 )}
