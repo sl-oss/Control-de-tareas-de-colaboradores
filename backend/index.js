@@ -1,4 +1,3 @@
-// backend/index.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -69,9 +68,25 @@ app.post('/login', async (req, res) => {
   res.json({ token, rol: user.rol });
 });
 
-// 📄 Obtener todas las tareas
+// 📄 Obtener todas las tareas (solo no archivadas)
 app.get('/tareas', async (_req, res) => {
-  const { data, error } = await supabase.from('tareas').select('*');
+  const { data, error } = await supabase
+    .from('tareas')
+    .select('*')
+    .eq('archivada', false);
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// 📁 Obtener tareas finalizadas y archivadas
+app.get('/tareas/finalizadas', async (_req, res) => {
+  const { data, error } = await supabase
+    .from('tareas')
+    .select('*')
+    .eq('estado', 'Finalizado')
+    .eq('archivada', true);
+
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
@@ -81,7 +96,13 @@ app.post('/tareas', async (req, res) => {
   const { descripcion, colaborador, fechaEntrega } = req.body;
   const { data, error } = await supabase
     .from('tareas')
-    .insert({ descripcion, colaborador, fechaEntrega, estado: 'No iniciada' })
+    .insert({
+      descripcion,
+      colaborador,
+      fechaEntrega,
+      estado: 'No iniciada',
+      archivada: false
+    })
     .select('id')
     .limit(1);
 
@@ -93,7 +114,6 @@ app.post('/tareas', async (req, res) => {
 app.put('/tareas/:id', async (req, res) => {
   const { id } = req.params;
 
-  // 🪵 Log de depuración
   console.log(`📝 PUT /tareas/${id} con datos:`, req.body);
 
   const {
@@ -124,6 +144,18 @@ app.put('/tareas/:id', async (req, res) => {
 
   console.log(`✅ Tarea ${id} actualizada correctamente`);
   res.json({ mensaje: 'Tarea actualizada correctamente' });
+});
+
+// 📦 Archivar tarea por ID
+app.put('/tareas/archivar/:id', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase
+    .from('tareas')
+    .update({ archivada: true })
+    .eq('id', id);
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Tarea archivada correctamente' });
 });
 
 // 🗑️ Eliminar tarea
