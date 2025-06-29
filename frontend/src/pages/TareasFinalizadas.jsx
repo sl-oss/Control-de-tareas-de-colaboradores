@@ -15,7 +15,8 @@ export default function TareasFinalizadas() {
       <ul className="space-y-2">
         {tareas.map((t) => (
           <li key={t.id} className="border p-2 rounded shadow">
-            <strong>{t.tarea}</strong> - {t.colaborador}
+            <strong>{t.descripcion}</strong> - {t.colaborador} <br />
+            <span className="text-sm text-gray-600">Estado: {t.estado}</span>
           </li>
         ))}
       </ul>
