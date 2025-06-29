@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { saveAs } from "file-saver";
+import saveAs from "file-saver";
 import {
   Document,
   Packer,
@@ -31,36 +31,48 @@ export default function TareasFinalizadas() {
   };
 
   const generarWord = async () => {
-    const doc = new Document();
+    try {
+      const doc = new Document({
+        creator: "Control de Tareas",
+        title: "Reporte de Tareas Finalizadas",
+        description: "Tareas finalizadas archivadas"
+      });
 
-    doc.addSection({
-      children: [
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: "Reporte de Tareas Finalizadas",
-              bold: true,
-              size: 28,
-            })
-          ],
-        }),
-        ...tareas.map(t =>
+      doc.addSection({
+        properties: {},
+        children: [
           new Paragraph({
             children: [
-              new TextRun({ text: `\nTarea: ${t.descripcion}`, bold: true }),
-              new TextRun({ text: `\nColaborador: ${t.colaborador}` }),
-              new TextRun({ text: `\nEstado: ${t.estado}` }),
-              new TextRun({ text: `\nInicio: ${formatearHora(t.horaInicio)}` }),
-              new TextRun({ text: `\nFin: ${formatearHora(t.horaFin)}` }),
-              new TextRun({ text: `\nDuración: ${formatearTiempo(t.tiempo)}\n` }),
-            ]
-          })
-        )
-      ]
-    });
+              new TextRun({
+                text: "📋 Reporte de Tareas Finalizadas",
+                bold: true,
+                size: 28,
+                break: 1
+              })
+            ],
+          }),
+          ...tareas.map(t =>
+            new Paragraph({
+              spacing: { after: 150 },
+              children: [
+                new TextRun({ text: `Tarea: ${t.descripcion}`, bold: true, break: 1 }),
+                new TextRun({ text: `Colaborador: ${t.colaborador}`, break: 1 }),
+                new TextRun({ text: `Estado: ${t.estado}`, break: 1 }),
+                new TextRun({ text: `Inicio: ${formatearHora(t.horaInicio)}`, break: 1 }),
+                new TextRun({ text: `Fin: ${formatearHora(t.horaFin)}`, break: 1 }),
+                new TextRun({ text: `Duración: ${formatearTiempo(t.tiempo)}`, break: 1 }),
+              ]
+            })
+          )
+        ]
+      });
 
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, "reporte_tareas_finalizadas.docx");
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, "reporte_tareas_finalizadas.docx");
+    } catch (error) {
+      console.error("Error generando el documento:", error);
+      alert("Ocurrió un error al generar el reporte.");
+    }
   };
 
   return (
