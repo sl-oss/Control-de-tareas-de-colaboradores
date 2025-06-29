@@ -65,9 +65,16 @@ function Tareas() {
 
   const formatearTiempo = (minutos) => {
     if (minutos === null || minutos === undefined || isNaN(minutos)) return "-";
-    const hrs = Math.floor(minutos / 60);
+    const dias = Math.floor(minutos / 1440);
+    const hrs = Math.floor((minutos % 1440) / 60);
     const mins = minutos % 60;
-    return hrs > 0 ? `${hrs} h ${mins} min` : `${mins} min`;
+
+    let resultado = "";
+    if (dias > 0) resultado += `${dias} día${dias > 1 ? "s" : ""} `;
+    if (hrs > 0) resultado += `${hrs} h `;
+    if (mins > 0 || resultado === "") resultado += `${mins} min`;
+
+    return resultado.trim();
   };
 
   const crearTarea = async (e) => {
