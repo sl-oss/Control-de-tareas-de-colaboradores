@@ -9,8 +9,8 @@ import {
 
 export default function TareasFinalizadas() {
   const [tareas, setTareas] = useState([]);
-  const [mesSeleccionado, setMesSeleccionado] = useState("");
-  const [mesAplicado, setMesAplicado] = useState("");
+  const [fechaSeleccionada, setFechaSeleccionada] = useState("");
+  const [fechaAplicada, setFechaAplicada] = useState("");
 
   useEffect(() => {
     fetch("https://control-de-tareas-de-colaboradores.onrender.com/tareas/finalizadas")
@@ -46,16 +46,12 @@ export default function TareasFinalizadas() {
     return `${h}h ${m}min`;
   };
 
-  const filtrarPorMes = (tarea) => {
-    if (!mesAplicado) return true;
+  const filtrarPorFecha = (tarea) => {
+    if (!fechaAplicada) return true;
     if (!tarea.horaFin) return false;
 
-    const [año, mes] = mesAplicado.split("-");
-    const fechaTarea = new Date(tarea.horaFin);
-    return (
-      fechaTarea.getFullYear() === parseInt(año) &&
-      fechaTarea.getMonth() + 1 === parseInt(mes)
-    );
+    const fechaTarea = new Date(tarea.horaFin).toISOString().split("T")[0];
+    return fechaTarea === fechaAplicada;
   };
 
   const generarWord = async () => {
@@ -72,7 +68,7 @@ export default function TareasFinalizadas() {
           ],
           spacing: { after: 300 }
         }),
-        ...tareas.filter(filtrarPorMes).map(t =>
+        ...tareas.filter(filtrarPorFecha).map(t =>
           new Paragraph({
             spacing: { after: 200 },
             children: [
@@ -103,24 +99,24 @@ export default function TareasFinalizadas() {
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Tareas Finalizadas</h2>
 
-      {/* Filtro por mes con botones */}
+      {/* Filtro por fecha exacta */}
       <div className="mb-4 flex items-center gap-2">
         <input
-          type="month"
-          value={mesSeleccionado}
-          onChange={(e) => setMesSeleccionado(e.target.value)}
+          type="date"
+          value={fechaSeleccionada}
+          onChange={(e) => setFechaSeleccionada(e.target.value)}
           className="border rounded px-2 py-1"
         />
         <button
-          onClick={() => setMesAplicado(mesSeleccionado)}
+          onClick={() => setFechaAplicada(fechaSeleccionada)}
           className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded shadow"
         >
           Filtrar
         </button>
         <button
           onClick={() => {
-            setMesSeleccionado("");
-            setMesAplicado("");
+            setFechaSeleccionada("");
+            setFechaAplicada("");
           }}
           className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-1 rounded shadow"
         >
@@ -136,7 +132,7 @@ export default function TareasFinalizadas() {
       </button>
 
       <ul className="space-y-2">
-        {tareas.filter(filtrarPorMes).map((t) => (
+        {tareas.filter(filtrarPorFecha).map((t) => (
           <li key={t.id} className="border p-3 rounded shadow bg-white">
             <div><strong>{t.descripcion}</strong> - {t.colaborador}</div>
             <div className="text-sm text-gray-600">Estado: {t.estado}</div>
