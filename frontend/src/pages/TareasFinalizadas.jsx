@@ -24,6 +24,20 @@ export default function TareasFinalizadas() {
     return iso.split("T")[1]?.slice(0, 8);
   };
 
+  const formatearFechaHora = (iso) => {
+    if (!iso) return "-";
+    const fecha = new Date(iso);
+    return fecha.toLocaleString("es-SV", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  };
+
   const formatearTiempo = (min) => {
     if (!min && min !== 0) return "-";
     const h = Math.floor(min / 60);
@@ -65,7 +79,7 @@ export default function TareasFinalizadas() {
               new TextRun({ text: `Colaborador: ${t.colaborador}`, break: 1 }),
               new TextRun({ text: `Estado: ${t.estado}`, break: 1 }),
               new TextRun({ text: `Inicio: ${formatearHora(t.horaInicio)}`, break: 1 }),
-              new TextRun({ text: `Fin: ${formatearHora(t.horaFin)}`, break: 1 }),
+              new TextRun({ text: `Finalizado el: ${formatearFechaHora(t.horaFin)}`, break: 1 }),
               new TextRun({ text: `Duración: ${formatearTiempo(t.tiempo)}`, break: 1 }),
             ]
           })
@@ -112,7 +126,7 @@ export default function TareasFinalizadas() {
             <div><strong>{t.descripcion}</strong> - {t.colaborador}</div>
             <div className="text-sm text-gray-600">Estado: {t.estado}</div>
             <div className="text-sm text-gray-600">Inicio: {formatearHora(t.horaInicio)}</div>
-            <div className="text-sm text-gray-600">Fin: {formatearHora(t.horaFin)}</div>
+            <div className="text-sm text-gray-600">Finalizado el: {formatearFechaHora(t.horaFin)}</div>
             <div className="text-sm text-gray-600">Duración: {formatearTiempo(t.tiempo)}</div>
           </li>
         ))}
