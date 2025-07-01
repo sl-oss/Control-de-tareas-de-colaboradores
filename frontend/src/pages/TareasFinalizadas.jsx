@@ -9,6 +9,7 @@ import {
 
 export default function TareasFinalizadas() {
   const [tareas, setTareas] = useState([]);
+  const [mesSeleccionado, setMesSeleccionado] = useState("");
 
   useEffect(() => {
     fetch("https://control-de-tareas-de-colaboradores.onrender.com/tareas/finalizadas")
@@ -30,6 +31,18 @@ export default function TareasFinalizadas() {
     return `${h}h ${m}min`;
   };
 
+  const filtrarPorMes = (tarea) => {
+    if (!mesSeleccionado) return true;
+    if (!tarea.horaFin) return false;
+
+    const [año, mes] = mesSeleccionado.split("-");
+    const fechaTarea = new Date(tarea.horaFin);
+    return (
+      fechaTarea.getFullYear() === parseInt(año) &&
+      fechaTarea.getMonth() + 1 === parseInt(mes)
+    );
+  };
+
   const generarWord = async () => {
     try {
       const contenido = [
@@ -44,7 +57,7 @@ export default function TareasFinalizadas() {
           ],
           spacing: { after: 300 }
         }),
-        ...tareas.map(t =>
+        ...tareas.filter(filtrarPorMes).map(t =>
           new Paragraph({
             spacing: { after: 200 },
             children: [
@@ -74,14 +87,27 @@ export default function TareasFinalizadas() {
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Tareas Finalizadas</h2>
+
+      {/* Filtro por mes */}
+      <div className="mb-4">
+        <label className="mr-2 font-semibold">Filtrar por mes:</label>
+        <input
+          type="month"
+          value={mesSeleccionado}
+          onChange={(e) => setMesSeleccionado(e.target.value)}
+          className="border rounded px-2 py-1"
+        />
+      </div>
+
       <button
         onClick={generarWord}
         className="mb-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
       >
         Descargar Word
       </button>
+
       <ul className="space-y-2">
-        {tareas.map((t) => (
+        {tareas.filter(filtrarPorMes).map((t) => (
           <li key={t.id} className="border p-3 rounded shadow bg-white">
             <div><strong>{t.descripcion}</strong> - {t.colaborador}</div>
             <div className="text-sm text-gray-600">Estado: {t.estado}</div>
