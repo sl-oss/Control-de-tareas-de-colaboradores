@@ -10,6 +10,7 @@ import {
 export default function TareasFinalizadas() {
   const [tareas, setTareas] = useState([]);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
+  const [mesAplicado, setMesAplicado] = useState("");
 
   useEffect(() => {
     fetch("https://control-de-tareas-de-colaboradores.onrender.com/tareas/finalizadas")
@@ -46,10 +47,10 @@ export default function TareasFinalizadas() {
   };
 
   const filtrarPorMes = (tarea) => {
-    if (!mesSeleccionado) return true;
+    if (!mesAplicado) return true;
     if (!tarea.horaFin) return false;
 
-    const [año, mes] = mesSeleccionado.split("-");
+    const [año, mes] = mesAplicado.split("-");
     const fechaTarea = new Date(tarea.horaFin);
     return (
       fechaTarea.getFullYear() === parseInt(año) &&
@@ -102,15 +103,29 @@ export default function TareasFinalizadas() {
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Tareas Finalizadas</h2>
 
-      {/* Filtro por mes */}
-      <div className="mb-4">
-        <label className="mr-2 font-semibold">Filtrar por mes:</label>
+      {/* Filtro por mes con botones */}
+      <div className="mb-4 flex items-center gap-2">
         <input
           type="month"
           value={mesSeleccionado}
           onChange={(e) => setMesSeleccionado(e.target.value)}
           className="border rounded px-2 py-1"
         />
+        <button
+          onClick={() => setMesAplicado(mesSeleccionado)}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded shadow"
+        >
+          Filtrar
+        </button>
+        <button
+          onClick={() => {
+            setMesSeleccionado("");
+            setMesAplicado("");
+          }}
+          className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-1 rounded shadow"
+        >
+          Quitar filtro
+        </button>
       </div>
 
       <button
