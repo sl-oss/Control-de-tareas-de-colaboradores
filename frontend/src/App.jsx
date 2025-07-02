@@ -8,7 +8,9 @@ import Colaboradores from "./pages/Colaboradores";
 import ReporteSeguimiento from "./pages/ReporteSeguimiento";
 import ReporteNoIniciadas from "./pages/ReporteNoIniciadas";
 import ReporteResumen from "./pages/ReporteResumen";
-import TareasFinalizadas from "./pages/TareasFinalizadas"; // ✅ NUEVO
+import TareasFinalizadas from "./pages/TareasFinalizadas";
+import PresentacionImpuestos from "./pages/PresentacionImpuestos"; // ✅ NUEVO
+import PresentacionPlanilla from "./pages/PresentacionPlanilla";   // ✅ NUEVO
 
 import ProtectedRoute from "./ProtectedRoute";
 import Navbar from "./components/Navbar";
@@ -77,6 +79,24 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <TareasFinalizadas />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/impuestos"
+          element={
+            <ProtectedRoute>
+              <PresentacionImpuestos />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/planilla"
+          element={
+            <ProtectedRoute>
+              <PresentacionPlanilla />
             </ProtectedRoute>
           }
         />
