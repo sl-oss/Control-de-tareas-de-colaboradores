@@ -42,7 +42,7 @@ export default function PresentacionPlanilla() {
 
     try {
       const nuevo = {
-        persona: nuevoNombre,
+        nombre: nuevoNombre,
         tipo_persona: nuevoTipo,
         periodo,
         colaborador: "",
