@@ -1,4 +1,3 @@
-// PresentacionPlanilla.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
@@ -56,11 +55,15 @@ export default function PresentacionPlanilla() {
       };
 
       const res = await axios.post("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-planilla", nuevo);
-      setDatos([...datos, nuevo]);
+      setDatos([...datos, res.data]);
       setNuevoNombre("");
       setNuevoTipo("Natural");
     } catch (error) {
-      alert("Error al crear registro");
+      if (error.response?.status === 400) {
+        alert(error.response.data.error || "Ya existe este cliente en ese período");
+      } else {
+        alert("Error al crear registro");
+      }
     }
   };
 
