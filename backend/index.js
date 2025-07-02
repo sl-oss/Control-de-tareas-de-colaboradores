@@ -250,6 +250,46 @@ app.get('/reporte-resumen', async (_req, res) => {
   res.json(resultado);
 });
 
+// 📥 Presentación de impuestos
+app.get('/presentacion-impuestos', async (_req, res) => {
+  const { data, error } = await supabase.from('presentacion_impuestos').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/presentacion-impuestos', async (req, res) => {
+  const { error } = await supabase.from('presentacion_impuestos').insert(req.body);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Presentación de impuestos registrada' });
+});
+
+app.put('/presentacion-impuestos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from('presentacion_impuestos').update(req.body).eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Presentación de impuestos actualizada' });
+});
+
+// 📥 Presentación de planilla
+app.get('/presentacion-planilla', async (_req, res) => {
+  const { data, error } = await supabase.from('presentacion_planilla').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/presentacion-planilla', async (req, res) => {
+  const { error } = await supabase.from('presentacion_planilla').insert(req.body);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Presentación de planilla registrada' });
+});
+
+app.put('/presentacion-planilla/:id', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from('presentacion_planilla').update(req.body).eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Presentación de planilla actualizada' });
+});
+
 // 🚀 Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
