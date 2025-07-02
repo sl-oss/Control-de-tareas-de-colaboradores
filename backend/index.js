@@ -205,16 +205,13 @@ app.get('/reporte-resumen', async (_req, res) => {
   res.json(resultado);
 });
 
-// 📥 Presentación de impuestos (con filtro de período)
+// 📥 Presentación de impuestos
 app.get('/presentacion-impuestos', async (req, res) => {
   const { periodo } = req.query;
-
   let query = supabase.from('presentacion_impuestos').select('*');
   if (periodo) query = query.eq('periodo', periodo);
-
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
-
   res.json(data);
 });
 
@@ -233,10 +230,8 @@ app.post('/presentacion-impuestos', async (req, res) => {
   if (existente && existente.length > 0) return res.status(400).json({ error: 'Ya existe este cliente en ese período' });
 
   const nuevo = { ...req.body, creado_en: new Date().toISOString() };
-
   const { data, error } = await supabase.from('presentacion_impuestos').insert(nuevo).select('*').single();
   if (error) return res.status(500).json({ error: error.message });
-
   res.json(data);
 });
 
@@ -245,6 +240,13 @@ app.put('/presentacion-impuestos/:id', async (req, res) => {
   const { error } = await supabase.from('presentacion_impuestos').update(req.body).eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ mensaje: 'Presentación de impuestos actualizada' });
+});
+
+app.delete('/presentacion-impuestos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from('presentacion_impuestos').delete().eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Registro de impuestos eliminado correctamente' });
 });
 
 // 📥 Presentación de planilla
@@ -269,10 +271,8 @@ app.post('/presentacion-planilla', async (req, res) => {
   if (existente && existente.length > 0) return res.status(400).json({ error: 'Ya existe este cliente en ese período' });
 
   const nuevo = { ...req.body, creado_en: new Date().toISOString() };
-
   const { data, error } = await supabase.from('presentacion_planilla').insert(nuevo).select('*').single();
   if (error) return res.status(500).json({ error: error.message });
-
   res.json(data);
 });
 
@@ -281,6 +281,13 @@ app.put('/presentacion-planilla/:id', async (req, res) => {
   const { error } = await supabase.from('presentacion_planilla').update(req.body).eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ mensaje: 'Presentación de planilla actualizada' });
+});
+
+app.delete('/presentacion-planilla/:id', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from('presentacion_planilla').delete().eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Registro de planilla eliminado correctamente' });
 });
 
 // 🚀 Iniciar servidor
