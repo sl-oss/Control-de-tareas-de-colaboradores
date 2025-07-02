@@ -24,10 +24,14 @@ function Navbar() {
           Tareas
         </Link>
 
-        <Link to="/finalizadas" className="hover:text-green-400 font-semibold transition">
-          Finalizadas
-        </Link>
+        {/* Solo admin puede ver Finalizadas */}
+        {rol === "admin" && (
+          <Link to="/finalizadas" className="hover:text-green-400 font-semibold transition">
+            Finalizadas
+          </Link>
+        )}
 
+        {/* Visibles para ambos roles */}
         <Link to="/presentacion-impuestos" className="hover:text-green-400 font-semibold transition">
           Impuestos
         </Link>
@@ -36,6 +40,7 @@ function Navbar() {
           Planilla
         </Link>
 
+        {/* Solo admin ve lo siguiente */}
         {rol === "admin" && (
           <>
             <Link to="/colaboradores" className="hover:text-green-400 font-semibold transition">
