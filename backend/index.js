@@ -68,14 +68,14 @@ app.post('/login', async (req, res) => {
   res.json({ token, rol: user.rol });
 });
 
-// 📄 Obtener todas las tareas (no archivadas)
+// 📄 Obtener tareas activas
 app.get('/tareas', async (_req, res) => {
   const { data, error } = await supabase.from('tareas').select('*').eq('archivada', false);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// 📁 Tareas finalizadas y archivadas
+// 📁 Tareas finalizadas
 app.get('/tareas/finalizadas', async (_req, res) => {
   const { data, error } = await supabase.from('tareas').select('*').eq('estado', 'Finalizado').eq('archivada', true);
   if (error) return res.status(500).json({ error: error.message });
@@ -205,19 +205,22 @@ app.get('/reporte-resumen', async (_req, res) => {
   res.json(resultado);
 });
 
-// 📥 Presentación de impuestos
-app.get('/presentacion-impuestos', async (_req, res) => {
-  const { data, error } = await supabase.from('presentacion_impuestos').select('*');
+// 📥 Presentación de impuestos (con filtro de período)
+app.get('/presentacion-impuestos', async (req, res) => {
+  const { periodo } = req.query;
+
+  let query = supabase.from('presentacion_impuestos').select('*');
+  if (periodo) query = query.eq('periodo', periodo);
+
+  const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
+
   res.json(data);
 });
 
 app.post('/presentacion-impuestos', async (req, res) => {
   const { nombre, periodo } = req.body;
-
-  if (!nombre || !periodo) {
-    return res.status(400).json({ error: 'Nombre y período son obligatorios' });
-  }
+  if (!nombre || !periodo) return res.status(400).json({ error: 'Nombre y período son obligatorios' });
 
   const { data: existente, error: errorConsulta } = await supabase
     .from('presentacion_impuestos')
@@ -227,23 +230,13 @@ app.post('/presentacion-impuestos', async (req, res) => {
     .limit(1);
 
   if (errorConsulta) return res.status(500).json({ error: errorConsulta.message });
+  if (existente && existente.length > 0) return res.status(400).json({ error: 'Ya existe este cliente en ese período' });
 
-  if (existente && existente.length > 0) {
-    return res.status(400).json({ error: 'Ya existe este cliente en ese período' });
-  }
+  const nuevo = { ...req.body, creado_en: new Date().toISOString() };
 
-  const nuevo = {
-    ...req.body,
-    creado_en: new Date().toISOString()
-  };
-
-  const { data, error } = await supabase
-    .from('presentacion_impuestos')
-    .insert(nuevo)
-    .select('*')
-    .single();
-
+  const { data, error } = await supabase.from('presentacion_impuestos').insert(nuevo).select('*').single();
   if (error) return res.status(500).json({ error: error.message });
+
   res.json(data);
 });
 
@@ -263,10 +256,7 @@ app.get('/presentacion-planilla', async (_req, res) => {
 
 app.post('/presentacion-planilla', async (req, res) => {
   const { nombre, periodo } = req.body;
-
-  if (!nombre || !periodo) {
-    return res.status(400).json({ error: 'Nombre y período son obligatorios' });
-  }
+  if (!nombre || !periodo) return res.status(400).json({ error: 'Nombre y período son obligatorios' });
 
   const { data: existente, error: errorConsulta } = await supabase
     .from('presentacion_planilla')
@@ -276,18 +266,13 @@ app.post('/presentacion-planilla', async (req, res) => {
     .limit(1);
 
   if (errorConsulta) return res.status(500).json({ error: errorConsulta.message });
+  if (existente && existente.length > 0) return res.status(400).json({ error: 'Ya existe este cliente en ese período' });
 
-  if (existente && existente.length > 0) {
-    return res.status(400).json({ error: 'Ya existe este cliente en ese período' });
-  }
-
-  const nuevo = {
-    ...req.body,
-    creado_en: new Date().toISOString()
-  };
+  const nuevo = { ...req.body, creado_en: new Date().toISOString() };
 
   const { data, error } = await supabase.from('presentacion_planilla').insert(nuevo).select('*').single();
   if (error) return res.status(500).json({ error: error.message });
+
   res.json(data);
 });
 
