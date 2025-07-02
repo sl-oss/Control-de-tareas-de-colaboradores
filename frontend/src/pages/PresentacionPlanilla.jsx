@@ -167,5 +167,6 @@ export default function PresentacionPlanilla() {
           {juridicas.map(renderFila)}
         </tbody>
       </table>
-    </div>
-  ):
+       </div>
+  );
+}
