@@ -8,6 +8,7 @@ export default function PresentacionPlanilla() {
   const [periodo, setPeriodo] = useState("");
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoTipo, setNuevoTipo] = useState("Natural");
+  const [colaboradores, setColaboradores] = useState([]);
 
   const obtenerDatos = async () => {
     try {
@@ -17,6 +18,19 @@ export default function PresentacionPlanilla() {
       alert("Error al obtener datos");
     }
   };
+
+  const obtenerColaboradores = async () => {
+    try {
+      const res = await axios.get("https://control-de-tareas-de-colaboradores.onrender.com/colaboradores");
+      setColaboradores(res.data.map(c => c.nombre));
+    } catch (error) {
+      alert("Error al obtener colaboradores");
+    }
+  };
+
+  useEffect(() => {
+    obtenerColaboradores();
+  }, []);
 
   useEffect(() => {
     if (periodo) obtenerDatos();
@@ -116,28 +130,44 @@ export default function PresentacionPlanilla() {
     saveAs(new Blob([excel]), `Presentacion_Planilla_${periodo}.xlsx`);
   };
 
-  const renderFila = (d) => (
-    <tr key={d.id} className="text-sm">
-      <td className="border px-2 py-1">{d.nombre}</td>
-      {["detalles_cambios", "detalle_compartido", "planilla_aprobada", "mandamientos_entregados"].map(campo => (
-        <td key={campo} className="border text-center">
-          <input type="checkbox" checked={!!d[campo]} onChange={e => actualizarCampo(d.id, campo, e.target.checked)} />
+  const colores = {
+    "Silvia Baires": "#FFFFCC",
+    "Erick Arévalo": "#FFC000",
+    "Álvaro Melara": "#00FFFF",
+    "Didier Ortiz": "#00FF00",
+    "Rodrigo Pineda": "#FFFFFF"
+  };
+
+  const renderFila = (d) => {
+    const colorFondo = colores[d.colaborador] || "white";
+    return (
+      <tr key={d.id} className="text-sm" style={{ backgroundColor: colorFondo }}>
+        <td className="border px-2 py-1">{d.nombre}</td>
+        {["detalles_cambios", "detalle_compartido", "planilla_aprobada", "mandamientos_entregados"].map(campo => (
+          <td key={campo} className="border text-center">
+            <input type="checkbox" checked={!!d[campo]} onChange={e => actualizarCampo(d.id, campo, e.target.checked)} />
+          </td>
+        ))}
+        <td className="border">
+          <input type="date" className="w-full" value={d.fecha_entregado?.split("T")[0] || ""} onChange={e => actualizarCampo(d.id, "fecha_entregado", e.target.value)} />
         </td>
-      ))}
-      <td className="border">
-        <input type="date" className="w-full" value={d.fecha_entregado?.split("T")[0] || ""} onChange={e => actualizarCampo(d.id, "fecha_entregado", e.target.value)} />
-      </td>
-      <td className="border">
-        <input type="text" className="w-full" value={d.comentario || ""} onChange={e => actualizarCampo(d.id, "comentario", e.target.value)} />
-      </td>
-      <td className="border">
-        <input type="text" className="w-full" value={d.colaborador || ""} onChange={e => actualizarCampo(d.id, "colaborador", e.target.value)} />
-      </td>
-      <td className="border text-center">
-        <button onClick={() => eliminarCliente(d.id)} className="text-red-600 hover:underline">🗑️</button>
-      </td>
-    </tr>
-  );
+        <td className="border">
+          <input type="text" className="w-full" value={d.comentario || ""} onChange={e => actualizarCampo(d.id, "comentario", e.target.value)} />
+        </td>
+        <td className="border">
+          <select className="w-full" value={d.colaborador || ""} onChange={e => actualizarCampo(d.id, "colaborador", e.target.value)}>
+            <option value="">--</option>
+            {colaboradores.map(nombre => (
+              <option key={nombre} value={nombre}>{nombre}</option>
+            ))}
+          </select>
+        </td>
+        <td className="border text-center">
+          <button onClick={() => eliminarCliente(d.id)} className="text-red-600 hover:underline">🗑️</button>
+        </td>
+      </tr>
+    );
+  };
 
   const naturales = datos.filter(d => d.tipo_persona?.toLowerCase() === "natural");
   const juridicas = datos.filter(d => d.tipo_persona?.toLowerCase() === "juridica");
