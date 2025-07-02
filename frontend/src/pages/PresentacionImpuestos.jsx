@@ -46,13 +46,57 @@ export default function PresentacionImpuestos() {
         persona,
         periodo,
         colaborador: "",
-        comentario: ""
+        comentario: "",
+        documentos_solicitados: false,
+        documentos_proporcionados: false,
+        declaraciones_presentadas: false,
+        mandamientos_entregados: false,
+        fecha_entregado: ""
       });
       setDatos([...datos, res.data]);
       setNuevoCliente({ nombre: "", persona: "Natural" });
     } catch (error) {
       alert("Error al crear cliente");
     }
+  };
+
+  const exportarExcel = () => {
+    const hoja = [
+      ["Presentación de Impuestos (IVA y PAC)"],
+      ["Periodo:", periodo],
+      [],
+      ["Personas Naturales"],
+      ["Cliente", "Doc. Solicitados", "Doc. Recibidos", "Declaración", "Mandamientos", "Fecha Entrega", "Comentario", "Colaborador"],
+      ...datos.filter(d => d.persona?.toLowerCase() === "natural").map(d => [
+        d.nombre,
+        d.documentos_solicitados ? "✔" : "",
+        d.documentos_proporcionados ? "✔" : "",
+        d.declaraciones_presentadas ? "✔" : "",
+        d.mandamientos_entregados ? "✔" : "",
+        d.fecha_entregado?.split("T")[0] || "",
+        d.comentario || "",
+        d.colaborador || ""
+      ]),
+      [],
+      ["Personas Jurídicas"],
+      ["Cliente", "Doc. Solicitados", "Doc. Recibidos", "Declaración", "Mandamientos", "Fecha Entrega", "Comentario", "Colaborador"],
+      ...datos.filter(d => d.persona?.toLowerCase() === "juridica").map(d => [
+        d.nombre,
+        d.documentos_solicitados ? "✔" : "",
+        d.documentos_proporcionados ? "✔" : "",
+        d.declaraciones_presentadas ? "✔" : "",
+        d.mandamientos_entregados ? "✔" : "",
+        d.fecha_entregado?.split("T")[0] || "",
+        d.comentario || "",
+        d.colaborador || ""
+      ])
+    ];
+
+    const libro = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(hoja);
+    XLSX.utils.book_append_sheet(libro, ws, "Impuestos");
+    const excel = XLSX.write(libro, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([excel]), `Presentacion_Impuestos_${periodo}.xlsx`);
   };
 
   const naturales = datos.filter(d => d.persona?.toLowerCase() === 'natural');
@@ -84,13 +128,9 @@ export default function PresentacionImpuestos() {
 
       <div className="mb-4 flex gap-4 flex-wrap">
         <input
-          type="date"
-          value={periodo ? `${periodo}-01` : ""}
-          onChange={e => {
-            const fecha = e.target.value;
-            const soloMes = fecha.slice(0, 7);
-            setPeriodo(soloMes);
-          }}
+          type="month"
+          value={periodo}
+          onChange={e => setPeriodo(e.target.value)}
           className="border rounded px-2 py-1"
         />
 
@@ -112,6 +152,7 @@ export default function PresentacionImpuestos() {
         </select>
 
         <button onClick={crearRegistro} className="bg-green-600 text-white px-4 py-1 rounded shadow">+ Cliente</button>
+        <button onClick={exportarExcel} className="bg-blue-600 text-white px-4 py-1 rounded shadow">📤 Exportar Excel</button>
       </div>
 
       <h3 className="text-lg font-semibold mt-4 mb-2">Personas Naturales</h3>
