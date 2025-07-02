@@ -43,7 +43,7 @@ export default function PresentacionImpuestos() {
     try {
       const res = await axios.post("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-impuestos", {
         nombre,
-        persona,
+        tipo_persona: persona,
         periodo,
         colaborador: "",
         comentario: "",
@@ -67,7 +67,7 @@ export default function PresentacionImpuestos() {
       [],
       ["Personas Naturales"],
       ["Cliente", "Doc. Solicitados", "Doc. Recibidos", "Declaración", "Mandamientos", "Fecha Entrega", "Comentario", "Colaborador"],
-      ...datos.filter(d => d.persona?.toLowerCase() === "natural").map(d => [
+      ...datos.filter(d => d.tipo_persona?.toLowerCase() === "natural").map(d => [
         d.nombre,
         d.documentos_solicitados ? "✔" : "",
         d.documentos_proporcionados ? "✔" : "",
@@ -80,7 +80,7 @@ export default function PresentacionImpuestos() {
       [],
       ["Personas Jurídicas"],
       ["Cliente", "Doc. Solicitados", "Doc. Recibidos", "Declaración", "Mandamientos", "Fecha Entrega", "Comentario", "Colaborador"],
-      ...datos.filter(d => d.persona?.toLowerCase() === "juridica").map(d => [
+      ...datos.filter(d => d.tipo_persona?.toLowerCase() === "juridica").map(d => [
         d.nombre,
         d.documentos_solicitados ? "✔" : "",
         d.documentos_proporcionados ? "✔" : "",
@@ -99,8 +99,8 @@ export default function PresentacionImpuestos() {
     saveAs(new Blob([excel]), `Presentacion_Impuestos_${periodo}.xlsx`);
   };
 
-  const naturales = datos.filter(d => d.persona?.toLowerCase() === 'natural');
-  const juridicas = datos.filter(d => d.persona?.toLowerCase() === 'juridica');
+  const naturales = datos.filter(d => d.tipo_persona?.toLowerCase() === 'natural');
+  const juridicas = datos.filter(d => d.tipo_persona?.toLowerCase() === 'juridica');
 
   const renderFila = (d) => (
     <tr key={d.id} className="text-sm">
