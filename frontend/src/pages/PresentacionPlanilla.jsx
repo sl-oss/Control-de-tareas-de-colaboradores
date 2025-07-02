@@ -1,3 +1,4 @@
+// PresentacionPlanilla.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
@@ -11,10 +12,8 @@ export default function PresentacionPlanilla() {
 
   const obtenerDatos = async () => {
     try {
-      const res = await axios.get("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-planilla", {
-        params: { periodo }
-      });
-      setDatos(res.data);
+      const res = await axios.get("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-planilla");
+      setDatos(res.data.filter(d => d.periodo === periodo));
     } catch (error) {
       alert("Error al obtener datos");
     }
@@ -29,7 +28,6 @@ export default function PresentacionPlanilla() {
     const index = copia.findIndex(d => d.id === id);
     copia[index][campo] = valor;
     setDatos(copia);
-
     try {
       await axios.put(`https://control-de-tareas-de-colaboradores.onrender.com/presentacion-planilla/${id}`, copia[index]);
     } catch (error) {
@@ -44,15 +42,21 @@ export default function PresentacionPlanilla() {
     }
 
     try {
-      const res = await axios.post("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-planilla", {
-        persona: nuevoTipo,
+      const nuevo = {
+        persona: nuevoNombre,
+        tipo_persona: nuevoTipo,
         periodo,
-        nombre: nuevoNombre,
         colaborador: "",
         comentario: "",
-        detalles_cambios: ""
-      });
-      setDatos([...datos, res.data]);
+        detalles_cambios: false,
+        detalle_compartido: false,
+        planilla_aprobada: false,
+        mandamientos_entregados: false,
+        fecha_entregado: null
+      };
+
+      const res = await axios.post("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-planilla", nuevo);
+      setDatos([...datos, nuevo]);
       setNuevoNombre("");
       setNuevoTipo("Natural");
     } catch (error) {
@@ -67,10 +71,10 @@ export default function PresentacionPlanilla() {
       [],
       ["Personas Naturales"],
       ["Cliente", "Cambios Solicitados", "Planilla Detalle", "Aprobada", "Mandamientos", "Fecha Entrega", "Comentario", "Colaborador"],
-      ...datos.filter(d => d.persona?.toLowerCase() === "natural").map(d => [
-        d.nombre,
-        d.detalles_cambios || "",
-        d.planilla_detalle ? "✔" : "",
+      ...datos.filter(d => d.tipo_persona?.toLowerCase() === "natural").map(d => [
+        d.persona,
+        d.detalles_cambios ? "✔" : "",
+        d.detalle_compartido ? "✔" : "",
         d.planilla_aprobada ? "✔" : "",
         d.mandamientos_entregados ? "✔" : "",
         d.fecha_entregado?.split("T")[0] || "",
@@ -80,10 +84,10 @@ export default function PresentacionPlanilla() {
       [],
       ["Personas Jurídicas"],
       ["Cliente", "Cambios Solicitados", "Planilla Detalle", "Aprobada", "Mandamientos", "Fecha Entrega", "Comentario", "Colaborador"],
-      ...datos.filter(d => d.persona?.toLowerCase() === "juridica").map(d => [
-        d.nombre,
-        d.detalles_cambios || "",
-        d.planilla_detalle ? "✔" : "",
+      ...datos.filter(d => d.tipo_persona?.toLowerCase() === "juridica").map(d => [
+        d.persona,
+        d.detalles_cambios ? "✔" : "",
+        d.detalle_compartido ? "✔" : "",
         d.planilla_aprobada ? "✔" : "",
         d.mandamientos_entregados ? "✔" : "",
         d.fecha_entregado?.split("T")[0] || "",
@@ -101,29 +105,26 @@ export default function PresentacionPlanilla() {
 
   const renderFila = (d) => (
     <tr key={d.id} className="text-sm">
-      <td className="border px-2 py-1">{d.nombre}</td>
-      <td className="border">
-        <input type="text" className="w-full" value={d.detalles_cambios || ''} onChange={e => actualizarCampo(d.id, 'detalles_cambios', e.target.value)} />
-      </td>
-      {["planilla_detalle", "planilla_aprobada", "mandamientos_entregados"].map(campo => (
+      <td className="border px-2 py-1">{d.persona}</td>
+      {["detalles_cambios", "detalle_compartido", "planilla_aprobada", "mandamientos_entregados"].map(campo => (
         <td key={campo} className="border text-center">
-          <input type="checkbox" checked={d[campo]} onChange={e => actualizarCampo(d.id, campo, e.target.checked)} />
+          <input type="checkbox" checked={!!d[campo]} onChange={e => actualizarCampo(d.id, campo, e.target.checked)} />
         </td>
       ))}
       <td className="border">
-        <input type="date" className="w-full" value={d.fecha_entregado?.split('T')[0] || ''} onChange={e => actualizarCampo(d.id, 'fecha_entregado', e.target.value)} />
+        <input type="date" className="w-full" value={d.fecha_entregado?.split("T")[0] || ""} onChange={e => actualizarCampo(d.id, "fecha_entregado", e.target.value)} />
       </td>
       <td className="border">
-        <input type="text" className="w-full" value={d.comentario || ''} onChange={e => actualizarCampo(d.id, 'comentario', e.target.value)} />
+        <input type="text" className="w-full" value={d.comentario || ""} onChange={e => actualizarCampo(d.id, "comentario", e.target.value)} />
       </td>
       <td className="border">
-        <input type="text" className="w-full" value={d.colaborador || ''} onChange={e => actualizarCampo(d.id, 'colaborador', e.target.value)} />
+        <input type="text" className="w-full" value={d.colaborador || ""} onChange={e => actualizarCampo(d.id, "colaborador", e.target.value)} />
       </td>
     </tr>
   );
 
-  const naturales = datos.filter(d => d.persona?.toLowerCase() === 'natural');
-  const juridicas = datos.filter(d => d.persona?.toLowerCase() === 'juridica');
+  const naturales = datos.filter(d => d.tipo_persona?.toLowerCase() === "natural");
+  const juridicas = datos.filter(d => d.tipo_persona?.toLowerCase() === "juridica");
 
   return (
     <div className="p-4">
@@ -148,7 +149,6 @@ export default function PresentacionPlanilla() {
           onChange={e => setNuevoTipo(e.target.value)}
           className="border rounded px-2 py-1"
         >
-          <option value="">Tipo de persona</option>
           <option value="Natural">Natural</option>
           <option value="Juridica">Jurídica</option>
         </select>
@@ -165,11 +165,11 @@ export default function PresentacionPlanilla() {
         <thead className="bg-gray-100">
           <tr>
             <th className="border px-2">Cliente</th>
-            <th className="border px-2">🛠 Cambios Solicitados</th>
-            <th className="border px-2">📄 Planilla Detalle</th>
+            <th className="border px-2">🛠 Cambios</th>
+            <th className="border px-2">📄 Detalle</th>
             <th className="border px-2">✅ Aprobada</th>
             <th className="border px-2">📬 Mandamientos</th>
-            <th className="border px-2">📆 Fecha Entrega</th>
+            <th className="border px-2">📆 Entrega</th>
             <th className="border px-2">📝 Comentario</th>
             <th className="border px-2">👤 Colaborador</th>
           </tr>
@@ -184,11 +184,11 @@ export default function PresentacionPlanilla() {
         <thead className="bg-gray-100">
           <tr>
             <th className="border px-2">Cliente</th>
-            <th className="border px-2">🛠 Cambios Solicitados</th>
-            <th className="border px-2">📄 Planilla Detalle</th>
+            <th className="border px-2">🛠 Cambios</th>
+            <th className="border px-2">📄 Detalle</th>
             <th className="border px-2">✅ Aprobada</th>
             <th className="border px-2">📬 Mandamientos</th>
-            <th className="border px-2">📆 Fecha Entrega</th>
+            <th className="border px-2">📆 Entrega</th>
             <th className="border px-2">📝 Comentario</th>
             <th className="border px-2">👤 Colaborador</th>
           </tr>
