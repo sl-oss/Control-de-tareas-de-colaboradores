@@ -51,7 +51,7 @@ export default function PresentacionImpuestos() {
         documentos_proporcionados: false,
         declaraciones_presentadas: false,
         mandamientos_entregados: false,
-        fecha_entregado: ""
+        fecha_entregado: null
       });
       setDatos([...datos, res.data]);
       setNuevoCliente({ nombre: "", persona: "Natural" });
