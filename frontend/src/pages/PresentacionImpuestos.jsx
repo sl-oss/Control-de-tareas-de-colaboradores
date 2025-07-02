@@ -46,7 +46,8 @@ export default function PresentacionImpuestos() {
 
       const clientes = res.data;
       const nuevos = clientes.map(c => ({
-        ...c,
+        nombre: c.nombre,
+        tipo_persona: c.tipo_persona,
         periodo,
         documentos_solicitados: false,
         documentos_proporcionados: false,

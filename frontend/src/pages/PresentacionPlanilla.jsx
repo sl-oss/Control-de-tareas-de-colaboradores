@@ -43,7 +43,8 @@ export default function PresentacionPlanilla() {
       const clientes = res.data.filter(d => d.periodo === mesAnterior);
 
       const nuevos = clientes.map(c => ({
-        ...c,
+        nombre: c.nombre,
+        tipo_persona: c.tipo_persona,
         periodo,
         detalles_cambios: false,
         detalle_compartido: false,
