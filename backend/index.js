@@ -258,9 +258,9 @@ app.get('/presentacion-impuestos', async (_req, res) => {
 });
 
 app.post('/presentacion-impuestos', async (req, res) => {
-  const { error } = await supabase.from('presentacion_impuestos').insert(req.body);
+  const { data, error } = await supabase.from('presentacion_impuestos').insert(req.body).select('*').single();
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ mensaje: 'Presentación de impuestos registrada' });
+  res.json(data);
 });
 
 app.put('/presentacion-impuestos/:id', async (req, res) => {
