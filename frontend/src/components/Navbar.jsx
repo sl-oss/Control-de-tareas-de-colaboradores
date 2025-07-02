@@ -19,9 +19,21 @@ function Navbar() {
 
   return (
     <nav className="bg-neutral-900 text-white px-6 py-4 shadow-md flex justify-between items-center">
-      <div className="flex gap-6 items-center">
+      <div className="flex gap-6 items-center flex-wrap">
         <Link to="/tareas" className="hover:text-green-400 font-semibold transition">
           Tareas
+        </Link>
+
+        <Link to="/finalizadas" className="hover:text-green-400 font-semibold transition">
+          Finalizadas
+        </Link>
+
+        <Link to="/presentacion-impuestos" className="hover:text-green-400 font-semibold transition">
+          Impuestos
+        </Link>
+
+        <Link to="/presentacion-planilla" className="hover:text-green-400 font-semibold transition">
+          Planilla
         </Link>
 
         {rol === "admin" && (
@@ -40,19 +52,6 @@ function Navbar() {
 
             <Link to="/resumen" className="hover:text-green-400 font-semibold transition">
               Resumen
-            </Link>
-
-            <Link to="/finalizadas" className="hover:text-green-400 font-semibold transition">
-              Finalizadas
-            </Link>
-
-            {/* ✅ NUEVOS ENLACES */}
-            <Link to="/impuestos" className="hover:text-green-400 font-semibold transition">
-              Impuestos
-            </Link>
-
-            <Link to="/planilla" className="hover:text-green-400 font-semibold transition">
-              Planilla
             </Link>
           </>
         )}
