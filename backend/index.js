@@ -262,9 +262,33 @@ app.get('/presentacion-planilla', async (_req, res) => {
 });
 
 app.post('/presentacion-planilla', async (req, res) => {
-  const { error } = await supabase.from('presentacion_planilla').insert(req.body);
+  const { nombre, periodo } = req.body;
+
+  if (!nombre || !periodo) {
+    return res.status(400).json({ error: 'Nombre y período son obligatorios' });
+  }
+
+  const { data: existente, error: errorConsulta } = await supabase
+    .from('presentacion_planilla')
+    .select('id')
+    .eq('nombre', nombre)
+    .eq('periodo', periodo)
+    .limit(1);
+
+  if (errorConsulta) return res.status(500).json({ error: errorConsulta.message });
+
+  if (existente && existente.length > 0) {
+    return res.status(400).json({ error: 'Ya existe este cliente en ese período' });
+  }
+
+  const nuevo = {
+    ...req.body,
+    creado_en: new Date().toISOString()
+  };
+
+  const { data, error } = await supabase.from('presentacion_planilla').insert(nuevo).select('*').single();
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ mensaje: 'Presentación de planilla registrada' });
+  res.json(data);
 });
 
 app.put('/presentacion-planilla/:id', async (req, res) => {
