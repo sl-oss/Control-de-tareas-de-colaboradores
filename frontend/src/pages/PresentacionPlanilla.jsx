@@ -6,6 +6,8 @@ import { saveAs } from "file-saver";
 export default function PresentacionPlanilla() {
   const [datos, setDatos] = useState([]);
   const [periodo, setPeriodo] = useState("");
+  const [nuevoNombre, setNuevoNombre] = useState("");
+  const [nuevoTipo, setNuevoTipo] = useState("");
 
   const obtenerDatos = async () => {
     try {
@@ -36,20 +38,23 @@ export default function PresentacionPlanilla() {
   };
 
   const crearRegistro = async () => {
-    const nombre = prompt("Nombre del cliente");
-    const persona = prompt("Tipo de persona (Natural o Juridica)");
-    if (!nombre || !persona) return;
+    if (!nuevoNombre || !nuevoTipo || !periodo) {
+      alert("Debes ingresar nombre, tipo de persona y seleccionar el período");
+      return;
+    }
 
     try {
       const res = await axios.post("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-planilla", {
-        persona,
+        persona: nuevoTipo,
         periodo,
-        nombre,
+        nombre: nuevoNombre,
         colaborador: "",
         comentario: "",
         detalles_cambios: ""
       });
       setDatos([...datos, res.data]);
+      setNuevoNombre("");
+      setNuevoTipo("");
     } catch (error) {
       alert("Error al crear registro");
     }
@@ -124,10 +129,35 @@ export default function PresentacionPlanilla() {
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Presentación de Planilla Única</h2>
 
-      <div className="mb-4 flex gap-4 flex-wrap">
-        <input type="month" value={periodo} onChange={e => setPeriodo(e.target.value)} className="border rounded px-2 py-1" />
-        <button onClick={crearRegistro} className="bg-green-600 text-white px-4 py-1 rounded shadow">+ Cliente</button>
-        <button onClick={exportarExcel} className="bg-blue-600 text-white px-4 py-1 rounded shadow">📤 Exportar Excel</button>
+      <div className="mb-4 flex flex-wrap gap-2">
+        <input
+          type="month"
+          value={periodo}
+          onChange={e => setPeriodo(e.target.value)}
+          className="border rounded px-2 py-1"
+        />
+        <input
+          type="text"
+          placeholder="Nombre del cliente"
+          value={nuevoNombre}
+          onChange={e => setNuevoNombre(e.target.value)}
+          className="border rounded px-2 py-1"
+        />
+        <select
+          value={nuevoTipo}
+          onChange={e => setNuevoTipo(e.target.value)}
+          className="border rounded px-2 py-1"
+        >
+          <option value="">Tipo de persona</option>
+          <option value="Natural">Natural</option>
+          <option value="Juridica">Jurídica</option>
+        </select>
+        <button onClick={crearRegistro} className="bg-green-600 text-white px-4 py-1 rounded shadow">
+          + Cliente
+        </button>
+        <button onClick={exportarExcel} className="bg-blue-600 text-white px-4 py-1 rounded shadow">
+          📤 Exportar Excel
+        </button>
       </div>
 
       <h3 className="text-lg font-semibold mt-4 mb-2">Personas Naturales</h3>
@@ -167,6 +197,6 @@ export default function PresentacionPlanilla() {
           {juridicas.map(renderFila)}
         </tbody>
       </table>
-       </div>
+    </div>
   );
 }

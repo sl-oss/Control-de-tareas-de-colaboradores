@@ -6,6 +6,7 @@ import { saveAs } from "file-saver";
 export default function PresentacionImpuestos() {
   const [datos, setDatos] = useState([]);
   const [periodo, setPeriodo] = useState("");
+  const [nuevoCliente, setNuevoCliente] = useState({ nombre: "", persona: "Natural" });
 
   const obtenerDatos = async () => {
     try {
@@ -27,7 +28,6 @@ export default function PresentacionImpuestos() {
     const index = copia.findIndex(d => d.id === id);
     copia[index][campo] = valor;
     setDatos(copia);
-
     try {
       await axios.put(`https://control-de-tareas-de-colaboradores.onrender.com/presentacion-impuestos/${id}`, {
         ...copia[index]
@@ -38,62 +38,25 @@ export default function PresentacionImpuestos() {
   };
 
   const crearRegistro = async () => {
-    const nombre = prompt("Nombre del cliente");
-    const persona = prompt("Tipo de persona (Natural o Juridica)");
-    if (!nombre || !persona) return;
-
+    const { nombre, persona } = nuevoCliente;
+    if (!nombre || !persona) return alert("Nombre y tipo de persona son obligatorios");
     try {
       const res = await axios.post("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-impuestos", {
+        nombre,
         persona,
         periodo,
-        nombre,
         colaborador: "",
         comentario: ""
       });
       setDatos([...datos, res.data]);
+      setNuevoCliente({ nombre: "", persona: "Natural" });
     } catch (error) {
-      alert("Error al crear registro");
+      alert("Error al crear cliente");
     }
   };
 
-  const exportarExcel = () => {
-    const hoja = [
-      ["Presentación de Impuestos (IVA y PAC)", ""],
-      ["Periodo:", periodo],
-      [],
-      ["Personas Naturales"],
-      ["Cliente", "Doc. Solicitados", "Doc. Recibidos", "Declaración", "Mandamientos", "Fecha Entrega", "Comentario", "Colaborador"],
-      ...datos.filter(d => d.persona?.toLowerCase() === "natural").map(d => [
-        d.nombre,
-        d.documentos_solicitados ? "✔" : "",
-        d.documentos_proporcionados ? "✔" : "",
-        d.declaraciones_presentadas ? "✔" : "",
-        d.mandamientos_entregados ? "✔" : "",
-        d.fecha_entregado?.split("T")[0] || "",
-        d.comentario || "",
-        d.colaborador || ""
-      ]),
-      [],
-      ["Personas Jurídicas"],
-      ["Cliente", "Doc. Solicitados", "Doc. Recibidos", "Declaración", "Mandamientos", "Fecha Entrega", "Comentario", "Colaborador"],
-      ...datos.filter(d => d.persona?.toLowerCase() === "juridica").map(d => [
-        d.nombre,
-        d.documentos_solicitados ? "✔" : "",
-        d.documentos_proporcionados ? "✔" : "",
-        d.declaraciones_presentadas ? "✔" : "",
-        d.mandamientos_entregados ? "✔" : "",
-        d.fecha_entregado?.split("T")[0] || "",
-        d.comentario || "",
-        d.colaborador || ""
-      ])
-    ];
-
-    const libro = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(hoja);
-    XLSX.utils.book_append_sheet(libro, ws, "Impuestos");
-    const excel = XLSX.write(libro, { bookType: "xlsx", type: "array" });
-    saveAs(new Blob([excel]), `Presentacion_Impuestos_${periodo}.xlsx`);
-  };
+  const naturales = datos.filter(d => d.persona?.toLowerCase() === 'natural');
+  const juridicas = datos.filter(d => d.persona?.toLowerCase() === 'juridica');
 
   const renderFila = (d) => (
     <tr key={d.id} className="text-sm">
@@ -104,19 +67,16 @@ export default function PresentacionImpuestos() {
         </td>
       ))}
       <td className="border">
-        <input type="date" className="w-full" value={d.fecha_entregado?.split('T')[0] || ''} onChange={e => actualizarCampo(d.id, 'fecha_entregado', e.target.value)} />
+        <input type="date" className="w-full" value={d.fecha_entregado?.split("T")[0] || ""} onChange={e => actualizarCampo(d.id, "fecha_entregado", e.target.value)} />
       </td>
       <td className="border">
-        <input type="text" className="w-full" value={d.comentario || ''} onChange={e => actualizarCampo(d.id, 'comentario', e.target.value)} />
+        <input type="text" className="w-full" value={d.comentario || ""} onChange={e => actualizarCampo(d.id, "comentario", e.target.value)} />
       </td>
       <td className="border">
-        <input type="text" className="w-full" value={d.colaborador || ''} onChange={e => actualizarCampo(d.id, 'colaborador', e.target.value)} />
+        <input type="text" className="w-full" value={d.colaborador || ""} onChange={e => actualizarCampo(d.id, "colaborador", e.target.value)} />
       </td>
     </tr>
   );
-
-  const naturales = datos.filter(d => d.persona?.toLowerCase() === 'natural');
-  const juridicas = datos.filter(d => d.persona?.toLowerCase() === 'juridica');
 
   return (
     <div className="p-4">
@@ -124,8 +84,25 @@ export default function PresentacionImpuestos() {
 
       <div className="mb-4 flex gap-4 flex-wrap">
         <input type="month" value={periodo} onChange={e => setPeriodo(e.target.value)} className="border rounded px-2 py-1" />
+
+        <input
+          type="text"
+          placeholder="Nuevo cliente"
+          value={nuevoCliente.nombre}
+          onChange={e => setNuevoCliente({ ...nuevoCliente, nombre: e.target.value })}
+          className="border px-2 py-1 rounded"
+        />
+
+        <select
+          value={nuevoCliente.persona}
+          onChange={e => setNuevoCliente({ ...nuevoCliente, persona: e.target.value })}
+          className="border px-2 py-1 rounded"
+        >
+          <option value="Natural">Natural</option>
+          <option value="Juridica">Juridica</option>
+        </select>
+
         <button onClick={crearRegistro} className="bg-green-600 text-white px-4 py-1 rounded shadow">+ Cliente</button>
-        <button onClick={exportarExcel} className="bg-blue-600 text-white px-4 py-1 rounded shadow">📤 Exportar Excel</button>
       </div>
 
       <h3 className="text-lg font-semibold mt-4 mb-2">Personas Naturales</h3>
