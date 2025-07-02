@@ -28,6 +28,45 @@ export default function PresentacionPlanilla() {
     }
   };
 
+  const copiarClientesDelMesAnterior = async () => {
+    if (!periodo) return alert("Selecciona un período válido");
+
+    const mesAnterior = (() => {
+      const [a, m] = periodo.split("-").map(Number);
+      const fecha = new Date(a, m - 1);
+      fecha.setMonth(fecha.getMonth() - 1);
+      return fecha.toISOString().slice(0, 7);
+    })();
+
+    try {
+      const res = await axios.get("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-planilla");
+      const clientes = res.data.filter(d => d.periodo === mesAnterior);
+
+      const nuevos = clientes.map(c => ({
+        ...c,
+        periodo,
+        detalles_cambios: false,
+        detalle_compartido: false,
+        planilla_aprobada: false,
+        mandamientos_entregados: false,
+        fecha_entregado: null,
+        comentario: "",
+        colaborador: ""
+      }));
+
+      const guardados = await Promise.all(
+        nuevos.map(n =>
+          axios.post("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-planilla", n).then(res => res.data)
+        )
+      );
+
+      setDatos(prev => [...prev, ...guardados]);
+      alert("Clientes copiados del mes anterior correctamente");
+    } catch (error) {
+      alert("Error al copiar clientes del mes anterior");
+    }
+  };
+
   useEffect(() => {
     obtenerColaboradores();
   }, []);
@@ -46,6 +85,10 @@ export default function PresentacionPlanilla() {
     } catch (error) {
       alert("Error al guardar");
     }
+  };
+
+  const actualizarPeriodo = async (id, nuevoPeriodo) => {
+    actualizarCampo(id, "periodo", nuevoPeriodo);
   };
 
   const eliminarCliente = async (id) => {
@@ -162,6 +205,14 @@ export default function PresentacionPlanilla() {
             ))}
           </select>
         </td>
+        <td className="border">
+          <input
+            type="month"
+            value={d.periodo || ""}
+            onChange={e => actualizarPeriodo(d.id, e.target.value)}
+            className="w-full"
+          />
+        </td>
         <td className="border text-center">
           <button onClick={() => eliminarCliente(d.id)} className="text-red-600 hover:underline">🗑️</button>
         </td>
@@ -204,6 +255,9 @@ export default function PresentacionPlanilla() {
         <button onClick={exportarExcel} className="bg-blue-600 text-white px-4 py-1 rounded shadow">
           📤 Exportar Excel
         </button>
+        <button onClick={copiarClientesDelMesAnterior} className="bg-yellow-500 text-white px-4 py-1 rounded shadow">
+          📋 Copiar del mes anterior
+        </button>
       </div>
 
       <h3 className="text-lg font-semibold mt-4 mb-2">Personas Naturales</h3>
@@ -218,6 +272,7 @@ export default function PresentacionPlanilla() {
             <th className="border px-2">📆 Entrega</th>
             <th className="border px-2">📝 Comentario</th>
             <th className="border px-2">👤 Colaborador</th>
+            <th className="border px-2">📅 Mes</th>
             <th className="border px-2">🗑️</th>
           </tr>
         </thead>
@@ -238,6 +293,7 @@ export default function PresentacionPlanilla() {
             <th className="border px-2">📆 Entrega</th>
             <th className="border px-2">📝 Comentario</th>
             <th className="border px-2">👤 Colaborador</th>
+            <th className="border px-2">📅 Mes</th>
             <th className="border px-2">🗑️</th>
           </tr>
         </thead>
