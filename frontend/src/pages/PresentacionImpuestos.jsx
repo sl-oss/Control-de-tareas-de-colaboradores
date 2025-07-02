@@ -39,7 +39,7 @@ export default function PresentacionImpuestos() {
 
   const crearRegistro = async () => {
     const { nombre, persona } = nuevoCliente;
-    if (!nombre || !persona) return alert("Nombre y tipo de persona son obligatorios");
+    if (!nombre || !persona || !periodo) return alert("Nombre, tipo de persona y período son obligatorios");
     try {
       const res = await axios.post("https://control-de-tareas-de-colaboradores.onrender.com/presentacion-impuestos", {
         nombre,
@@ -61,7 +61,7 @@ export default function PresentacionImpuestos() {
   const renderFila = (d) => (
     <tr key={d.id} className="text-sm">
       <td className="border px-2 py-1">{d.nombre}</td>
-      {['documentos_solicitados', 'documentos_proporcionados', 'declaraciones_presentadas', 'mandamientos_entregados'].map(campo => (
+      {["documentos_solicitados", "documentos_proporcionados", "declaraciones_presentadas", "mandamientos_entregados"].map(campo => (
         <td key={campo} className="border text-center">
           <input type="checkbox" checked={d[campo]} onChange={e => actualizarCampo(d.id, campo, e.target.checked)} />
         </td>
@@ -83,7 +83,16 @@ export default function PresentacionImpuestos() {
       <h2 className="text-xl font-bold mb-4">Presentación de Impuestos (IVA y PAC)</h2>
 
       <div className="mb-4 flex gap-4 flex-wrap">
-        <input type="month" value={periodo} onChange={e => setPeriodo(e.target.value)} className="border rounded px-2 py-1" />
+        <input
+          type="date"
+          value={periodo ? `${periodo}-01` : ""}
+          onChange={e => {
+            const fecha = e.target.value;
+            const soloMes = fecha.slice(0, 7);
+            setPeriodo(soloMes);
+          }}
+          className="border rounded px-2 py-1"
+        />
 
         <input
           type="text"

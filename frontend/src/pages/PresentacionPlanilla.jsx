@@ -7,7 +7,7 @@ export default function PresentacionPlanilla() {
   const [datos, setDatos] = useState([]);
   const [periodo, setPeriodo] = useState("");
   const [nuevoNombre, setNuevoNombre] = useState("");
-  const [nuevoTipo, setNuevoTipo] = useState("");
+  const [nuevoTipo, setNuevoTipo] = useState("Natural");
 
   const obtenerDatos = async () => {
     try {
@@ -54,7 +54,7 @@ export default function PresentacionPlanilla() {
       });
       setDatos([...datos, res.data]);
       setNuevoNombre("");
-      setNuevoTipo("");
+      setNuevoTipo("Natural");
     } catch (error) {
       alert("Error al crear registro");
     }
@@ -105,7 +105,7 @@ export default function PresentacionPlanilla() {
       <td className="border">
         <input type="text" className="w-full" value={d.detalles_cambios || ''} onChange={e => actualizarCampo(d.id, 'detalles_cambios', e.target.value)} />
       </td>
-      {['planilla_detalle', 'planilla_aprobada', 'mandamientos_entregados'].map(campo => (
+      {["planilla_detalle", "planilla_aprobada", "mandamientos_entregados"].map(campo => (
         <td key={campo} className="border text-center">
           <input type="checkbox" checked={d[campo]} onChange={e => actualizarCampo(d.id, campo, e.target.checked)} />
         </td>
