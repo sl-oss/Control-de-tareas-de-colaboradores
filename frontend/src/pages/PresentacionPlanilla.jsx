@@ -75,7 +75,7 @@ export default function PresentacionPlanilla() {
       ["Personas Naturales"],
       ["Cliente", "Cambios Solicitados", "Planilla Detalle", "Aprobada", "Mandamientos", "Fecha Entrega", "Comentario", "Colaborador"],
       ...datos.filter(d => d.tipo_persona?.toLowerCase() === "natural").map(d => [
-        d.persona,
+        d.nombre,
         d.detalles_cambios ? "✔" : "",
         d.detalle_compartido ? "✔" : "",
         d.planilla_aprobada ? "✔" : "",
@@ -88,7 +88,7 @@ export default function PresentacionPlanilla() {
       ["Personas Jurídicas"],
       ["Cliente", "Cambios Solicitados", "Planilla Detalle", "Aprobada", "Mandamientos", "Fecha Entrega", "Comentario", "Colaborador"],
       ...datos.filter(d => d.tipo_persona?.toLowerCase() === "juridica").map(d => [
-        d.persona,
+        d.nombre,
         d.detalles_cambios ? "✔" : "",
         d.detalle_compartido ? "✔" : "",
         d.planilla_aprobada ? "✔" : "",
@@ -108,7 +108,7 @@ export default function PresentacionPlanilla() {
 
   const renderFila = (d) => (
     <tr key={d.id} className="text-sm">
-      <td className="border px-2 py-1">{d.persona}</td>
+      <td className="border px-2 py-1">{d.nombre}</td>
       {["detalles_cambios", "detalle_compartido", "planilla_aprobada", "mandamientos_entregados"].map(campo => (
         <td key={campo} className="border text-center">
           <input type="checkbox" checked={!!d[campo]} onChange={e => actualizarCampo(d.id, campo, e.target.checked)} />
