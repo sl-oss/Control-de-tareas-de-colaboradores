@@ -68,25 +68,16 @@ app.post('/login', async (req, res) => {
   res.json({ token, rol: user.rol });
 });
 
-// 📄 Obtener todas las tareas (solo no archivadas)
+// 📄 Obtener todas las tareas (no archivadas)
 app.get('/tareas', async (_req, res) => {
-  const { data, error } = await supabase
-    .from('tareas')
-    .select('*')
-    .eq('archivada', false);
-
+  const { data, error } = await supabase.from('tareas').select('*').eq('archivada', false);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// 📁 Obtener tareas finalizadas y archivadas
+// 📁 Tareas finalizadas y archivadas
 app.get('/tareas/finalizadas', async (_req, res) => {
-  const { data, error } = await supabase
-    .from('tareas')
-    .select('*')
-    .eq('estado', 'Finalizado')
-    .eq('archivada', true);
-
+  const { data, error } = await supabase.from('tareas').select('*').eq('estado', 'Finalizado').eq('archivada', true);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
@@ -110,21 +101,10 @@ app.post('/tareas', async (req, res) => {
   res.json({ id: data?.[0]?.id || null });
 });
 
-// ✏️ Actualizar tarea con log de depuración
+// ✏️ Actualizar tarea
 app.put('/tareas/:id', async (req, res) => {
   const { id } = req.params;
-
-  console.log(`📝 PUT /tareas/${id} con datos:`, req.body);
-
-  const {
-    descripcion,
-    colaborador,
-    fechaEntrega,
-    estado,
-    horaInicio,
-    horaFin,
-    tiempo
-  } = req.body;
+  const { descripcion, colaborador, fechaEntrega, estado, horaInicio, horaFin, tiempo } = req.body;
 
   const actualizacion = {
     ...(descripcion !== undefined && { descripcion }),
@@ -137,23 +117,15 @@ app.put('/tareas/:id', async (req, res) => {
   };
 
   const { error } = await supabase.from('tareas').update(actualizacion).eq('id', id);
-  if (error) {
-    console.error(`❌ Error actualizando tarea ${id}:`, error.message);
-    return res.status(500).json({ error: error.message });
-  }
+  if (error) return res.status(500).json({ error: error.message });
 
-  console.log(`✅ Tarea ${id} actualizada correctamente`);
   res.json({ mensaje: 'Tarea actualizada correctamente' });
 });
 
-// 📦 Archivar tarea por ID
+// 📦 Archivar tarea
 app.put('/tareas/archivar/:id', async (req, res) => {
   const { id } = req.params;
-  const { error } = await supabase
-    .from('tareas')
-    .update({ archivada: true })
-    .eq('id', id);
-
+  const { error } = await supabase.from('tareas').update({ archivada: true }).eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ mensaje: 'Tarea archivada correctamente' });
 });
@@ -166,29 +138,22 @@ app.delete('/tareas/:id', async (req, res) => {
   res.json({ mensaje: 'Tarea eliminada correctamente' });
 });
 
-// 👥 Obtener colaboradores
+// 👥 Colaboradores
 app.get('/colaboradores', async (_req, res) => {
   const { data, error } = await supabase.from('colaboradores').select('*');
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// ➕ Crear colaborador
 app.post('/colaboradores', async (req, res) => {
   const { nombre } = req.body;
   if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
 
-  const { data, error } = await supabase
-    .from('colaboradores')
-    .insert({ nombre })
-    .select('id, nombre')
-    .limit(1);
-
+  const { data, error } = await supabase.from('colaboradores').insert({ nombre }).select('id, nombre').limit(1);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data?.[0] || {});
 });
 
-// 🗑️ Eliminar colaborador
 app.delete('/colaboradores/:id', async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from('colaboradores').delete().eq('id', id);
@@ -196,21 +161,16 @@ app.delete('/colaboradores/:id', async (req, res) => {
   res.json({ mensaje: 'Colaborador eliminado correctamente' });
 });
 
-// 📊 Reporte tareas no iniciadas
+// 📊 Reportes
 app.get('/reporte-no-iniciadas', async (req, res) => {
   const { colaborador } = req.query;
-  let query = supabase.from('tareas')
-    .select('id, descripcion, colaborador, fechaEntrega')
-    .eq('estado', 'No iniciada');
-
+  let query = supabase.from('tareas').select('id, descripcion, colaborador, fechaEntrega').eq('estado', 'No iniciada');
   if (colaborador) query = query.eq('colaborador', colaborador);
-
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// 📊 Reporte resumen
 app.get('/reporte-resumen', async (_req, res) => {
   const { data: tareas, error } = await supabase.from('tareas').select('*');
   if (error) return res.status(500).json({ error: error.message });
@@ -218,12 +178,7 @@ app.get('/reporte-resumen', async (_req, res) => {
   const resumen = {};
   tareas.forEach(t => {
     if (!resumen[t.colaborador]) {
-      resumen[t.colaborador] = {
-        noIniciadas: 0,
-        enProceso: 0,
-        finalizadas: 0,
-        puntuales: 0
-      };
+      resumen[t.colaborador] = { noIniciadas: 0, enProceso: 0, finalizadas: 0, puntuales: 0 };
     }
     if (t.estado === 'No iniciada') resumen[t.colaborador].noIniciadas++;
     if (t.estado === 'En proceso') resumen[t.colaborador].enProceso++;
@@ -258,7 +213,36 @@ app.get('/presentacion-impuestos', async (_req, res) => {
 });
 
 app.post('/presentacion-impuestos', async (req, res) => {
-  const { data, error } = await supabase.from('presentacion_impuestos').insert(req.body).select('*').single();
+  const { nombre, periodo } = req.body;
+
+  if (!nombre || !periodo) {
+    return res.status(400).json({ error: 'Nombre y período son obligatorios' });
+  }
+
+  const { data: existente, error: errorConsulta } = await supabase
+    .from('presentacion_impuestos')
+    .select('id')
+    .eq('nombre', nombre)
+    .eq('periodo', periodo)
+    .limit(1);
+
+  if (errorConsulta) return res.status(500).json({ error: errorConsulta.message });
+
+  if (existente && existente.length > 0) {
+    return res.status(400).json({ error: 'Ya existe este cliente en ese período' });
+  }
+
+  const nuevo = {
+    ...req.body,
+    creado_en: new Date().toISOString()
+  };
+
+  const { data, error } = await supabase
+    .from('presentacion_impuestos')
+    .insert(nuevo)
+    .select('*')
+    .single();
+
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
