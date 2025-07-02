@@ -37,6 +37,16 @@ export default function PresentacionImpuestos() {
     }
   };
 
+  const eliminarCliente = async (id) => {
+    if (!confirm("¿Eliminar cliente?")) return;
+    try {
+      await axios.delete(`https://control-de-tareas-de-colaboradores.onrender.com/presentacion-impuestos/${id}`);
+      setDatos(datos.filter(d => d.id !== id));
+    } catch (error) {
+      alert("Error al eliminar");
+    }
+  };
+
   const crearRegistro = async () => {
     const { nombre, persona } = nuevoCliente;
     if (!nombre || !persona || !periodo) return alert("Nombre, tipo de persona y período son obligatorios");
@@ -119,6 +129,9 @@ export default function PresentacionImpuestos() {
       <td className="border">
         <input type="text" className="w-full" value={d.colaborador || ""} onChange={e => actualizarCampo(d.id, "colaborador", e.target.value)} />
       </td>
+      <td className="border text-center">
+        <button onClick={() => eliminarCliente(d.id)} className="text-red-600 hover:underline">🗑️</button>
+      </td>
     </tr>
   );
 
@@ -167,6 +180,7 @@ export default function PresentacionImpuestos() {
             <th className="border px-2">📆 Fecha Entrega</th>
             <th className="border px-2">📝 Comentario</th>
             <th className="border px-2">👤 Colaborador</th>
+            <th className="border px-2">🗑️</th>
           </tr>
         </thead>
         <tbody>
@@ -186,6 +200,7 @@ export default function PresentacionImpuestos() {
             <th className="border px-2">📆 Fecha Entrega</th>
             <th className="border px-2">📝 Comentario</th>
             <th className="border px-2">👤 Colaborador</th>
+            <th className="border px-2">🗑️</th>
           </tr>
         </thead>
         <tbody>

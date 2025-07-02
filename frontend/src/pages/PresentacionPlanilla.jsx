@@ -34,6 +34,16 @@ export default function PresentacionPlanilla() {
     }
   };
 
+  const eliminarCliente = async (id) => {
+    if (!confirm("¿Eliminar cliente?")) return;
+    try {
+      await axios.delete(`https://control-de-tareas-de-colaboradores.onrender.com/presentacion-planilla/${id}`);
+      setDatos(datos.filter(d => d.id !== id));
+    } catch (error) {
+      alert("Error al eliminar");
+    }
+  };
+
   const crearRegistro = async () => {
     if (!nuevoNombre || !nuevoTipo || !periodo) {
       alert("Debes ingresar nombre, tipo de persona y seleccionar el período");
@@ -123,6 +133,9 @@ export default function PresentacionPlanilla() {
       <td className="border">
         <input type="text" className="w-full" value={d.colaborador || ""} onChange={e => actualizarCampo(d.id, "colaborador", e.target.value)} />
       </td>
+      <td className="border text-center">
+        <button onClick={() => eliminarCliente(d.id)} className="text-red-600 hover:underline">🗑️</button>
+      </td>
     </tr>
   );
 
@@ -175,6 +188,7 @@ export default function PresentacionPlanilla() {
             <th className="border px-2">📆 Entrega</th>
             <th className="border px-2">📝 Comentario</th>
             <th className="border px-2">👤 Colaborador</th>
+            <th className="border px-2">🗑️</th>
           </tr>
         </thead>
         <tbody>
@@ -194,6 +208,7 @@ export default function PresentacionPlanilla() {
             <th className="border px-2">📆 Entrega</th>
             <th className="border px-2">📝 Comentario</th>
             <th className="border px-2">👤 Colaborador</th>
+            <th className="border px-2">🗑️</th>
           </tr>
         </thead>
         <tbody>
