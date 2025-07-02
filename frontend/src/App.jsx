@@ -9,8 +9,8 @@ import ReporteSeguimiento from "./pages/ReporteSeguimiento";
 import ReporteNoIniciadas from "./pages/ReporteNoIniciadas";
 import ReporteResumen from "./pages/ReporteResumen";
 import TareasFinalizadas from "./pages/TareasFinalizadas";
-import PresentacionImpuestos from "./pages/PresentacionImpuestos"; // ✅ NUEVO
-import PresentacionPlanilla from "./pages/PresentacionPlanilla";   // ✅ NUEVO
+import PresentacionImpuestos from "./pages/PresentacionImpuestos";
+import PresentacionPlanilla from "./pages/PresentacionPlanilla";
 
 import ProtectedRoute from "./ProtectedRoute";
 import Navbar from "./components/Navbar";
@@ -38,53 +38,53 @@ function AppContent() {
           }
         />
 
-        <Route
-          path="/colaboradores"
-          element={
-            <ProtectedRoute>
-              <Colaboradores />
-            </ProtectedRoute>
-          }
-        />
+        {rol === "admin" && (
+          <>
+            <Route
+              path="/colaboradores"
+              element={
+                <ProtectedRoute>
+                  <Colaboradores />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/seguimiento"
+              element={
+                <ProtectedRoute>
+                  <ReporteSeguimiento />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reporte-no-iniciadas"
+              element={
+                <ProtectedRoute>
+                  <ReporteNoIniciadas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/resumen"
+              element={
+                <ProtectedRoute>
+                  <ReporteResumen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/finalizadas"
+              element={
+                <ProtectedRoute>
+                  <TareasFinalizadas />
+                </ProtectedRoute>
+              }
+            />
+          </>
+        )}
 
         <Route
-          path="/seguimiento"
-          element={
-            <ProtectedRoute>
-              <ReporteSeguimiento />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/reporte-no-iniciadas"
-          element={
-            <ProtectedRoute>
-              <ReporteNoIniciadas />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/resumen"
-          element={
-            <ProtectedRoute>
-              <ReporteResumen />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/finalizadas"
-          element={
-            <ProtectedRoute>
-              <TareasFinalizadas />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/impuestos"
+          path="/presentacion-impuestos"
           element={
             <ProtectedRoute>
               <PresentacionImpuestos />
@@ -93,7 +93,7 @@ function AppContent() {
         />
 
         <Route
-          path="/planilla"
+          path="/presentacion-planilla"
           element={
             <ProtectedRoute>
               <PresentacionPlanilla />
