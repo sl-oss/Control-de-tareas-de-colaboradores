@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import saveAs from "file-saver";
-import ExcelJS from "exceljs";
+import * as XLSX from "xlsx";
 import {
   Document,
   Packer,
@@ -95,68 +95,39 @@ export default function TareasFinalizadas() {
 
   const colaboradoresUnicos = [...new Set(tareas.map(t => t.colaborador))];
 
-const exportarExcel = async () => {
+const exportarExcel = () => {
   const tareasFiltradas = tareas.filter(filtrarTareas);
 
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Tareas Finalizadas");
+  const datos = tareasFiltradas.map((t, i) => ({
+    "#": i + 1,
+    "Tarea": t.descripcion,
+    "Colaborador": t.colaborador,
+    "Estado": t.estado,
+    "Inicio": formatearFechaHora(t.horaInicio),
+    "Finalizado": formatearFechaHora(t.horaFin),
+    "Duración": formatearTiempo(t.tiempo),
+  }));
 
-  // Encabezados
-  worksheet.columns = [
-    { header: "#", key: "num", width: 5 },
-    { header: "Tarea", key: "descripcion", width: 30 },
-    { header: "Colaborador", key: "colaborador", width: 20 },
-    { header: "Estado", key: "estado", width: 15 },
-    { header: "Inicio", key: "inicio", width: 22 },
-    { header: "Finalizado", key: "finalizado", width: 22 },
-    { header: "Duración", key: "duracion", width: 15 },
-  ];
+  const hoja = XLSX.utils.json_to_sheet(datos);
 
-  // Agregar filas
-  tareasFiltradas.forEach((t, i) => {
-    worksheet.addRow({
-      num: i + 1,
-      descripcion: t.descripcion,
-      colaborador: t.colaborador,
-      estado: t.estado,
-      inicio: formatearFechaHora(t.horaInicio),
-      finalizado: formatearFechaHora(t.horaFin),
-      duracion: formatearTiempo(t.tiempo),
+  // Agregar autofiltro
+  hoja['!autofilter'] = { ref: "A1:G1" };
+
+  // Ajustar ancho de columnas
+  const maxLengths = datos.reduce((acc, row) => {
+    Object.keys(row).forEach((key, i) => {
+      const val = row[key]?.toString() || '';
+      acc[i] = Math.max(acc[i] || key.length, val.length);
     });
-  });
+    return acc;
+  }, []);
+  hoja["!cols"] = maxLengths.map(len => ({ wch: len + 2 }));
 
-  // Estilo de encabezados
-  worksheet.getRow(1).eachCell(cell => {
-    cell.font = { bold: true };
-    cell.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FFCCE5FF" }, // azul clarito
-    };
-    cell.border = {
-      top: { style: "thin" },
-      left: { style: "thin" },
-      bottom: { style: "thin" },
-      right: { style: "thin" }
-    };
-    cell.alignment = { vertical: "middle", horizontal: "center" };
-  });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, hoja, "Tareas Finalizadas");
 
-  // Borde para todas las celdas
-  worksheet.eachRow((row, rowNumber) => {
-    row.eachCell((cell) => {
-      cell.border = {
-        top: { style: "thin" },
-        left: { style: "thin" },
-        bottom: { style: "thin" },
-        right: { style: "thin" }
-      };
-    });
-  });
-
-  // Generar archivo y descargar
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const archivoExcel = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([archivoExcel], { type: "application/octet-stream" });
   saveAs(blob, "reporte_tareas_finalizadas.xlsx");
 };
 
