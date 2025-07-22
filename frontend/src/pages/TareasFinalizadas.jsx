@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import saveAs from "file-saver";
-import * as XLSX from "xlsx";
 import {
   Document,
   Packer,
@@ -93,43 +92,18 @@ export default function TareasFinalizadas() {
     }
   };
 
+  // ✅ Nueva función: descargar Excel desde backend
+  const exportarExcelDesdeBackend = () => {
+    fetch("https://control-de-tareas-de-colaboradores.onrender.com/exportar-excel-finalizadas")
+      .then((res) => res.blob())
+      .then((blob) => saveAs(blob, "reporte_tareas_finalizadas.xlsx"))
+      .catch((err) => {
+        console.error("Error al descargar Excel:", err);
+        alert("No se pudo descargar el archivo Excel.");
+      });
+  };
+
   const colaboradoresUnicos = [...new Set(tareas.map(t => t.colaborador))];
-
-const exportarExcel = () => {
-  const tareasFiltradas = tareas.filter(filtrarTareas);
-
-  const datos = tareasFiltradas.map((t, i) => ({
-    "#": i + 1,
-    "Tarea": t.descripcion,
-    "Colaborador": t.colaborador,
-    "Estado": t.estado,
-    "Inicio": formatearFechaHora(t.horaInicio),
-    "Finalizado": formatearFechaHora(t.horaFin),
-    "Duración": formatearTiempo(t.tiempo),
-  }));
-
-  const hoja = XLSX.utils.json_to_sheet(datos);
-
-  // Agregar autofiltro
-  hoja['!autofilter'] = { ref: "A1:G1" };
-
-  // Ajustar ancho de columnas
-  const maxLengths = datos.reduce((acc, row) => {
-    Object.keys(row).forEach((key, i) => {
-      const val = row[key]?.toString() || '';
-      acc[i] = Math.max(acc[i] || key.length, val.length);
-    });
-    return acc;
-  }, []);
-  hoja["!cols"] = maxLengths.map(len => ({ wch: len + 2 }));
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, hoja, "Tareas Finalizadas");
-
-  const archivoExcel = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  const blob = new Blob([archivoExcel], { type: "application/octet-stream" });
-  saveAs(blob, "reporte_tareas_finalizadas.xlsx");
-};
 
   return (
     <div className="p-4">
@@ -167,19 +141,21 @@ const exportarExcel = () => {
         </button>
       </div>
 
-      <button
-        onClick={generarWord}
-        className="mb-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
-      >
-        Descargar Word
-      </button>
+      <div className="flex gap-4 mb-4">
+        <button
+          onClick={generarWord}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+        >
+          Descargar Word
+        </button>
 
-      <button
-  onClick={exportarExcel}
-  className="mb-4 ml-3 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded shadow"
->
-  Descargar Excel
-</button>
+        <button
+          onClick={exportarExcelDesdeBackend}
+          className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded shadow"
+        >
+          Descargar Excel PRO
+        </button>
+      </div>
 
       <ul className="space-y-2">
         {tareas.filter(filtrarTareas).map((t) => (
