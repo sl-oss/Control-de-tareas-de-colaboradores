@@ -292,15 +292,27 @@ app.delete('/presentacion-planilla/:id', async (req, res) => {
 
 const ExcelJS = require("exceljs");
 
-app.get('/exportar-excel-finalizadas', async (_req, res) => {
+app.post('/exportar-excel-finalizadas', async (req, res) => {
   try {
-    const { data: tareas, error } = await supabase
-      .from('tareas')
-      .select('*')
-      .eq('estado', 'Finalizado')
-      .eq('archivada', true);
+    const tareas = req.body.tareas;
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (!Array.isArray(tareas) || tareas.length === 0) {
+      return res.status(400).json({ error: "No se recibieron tareas para exportar." });
+    }
+
+    const ExcelJS = require("exceljs");
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Tareas Finalizadas");
+
+    sheet.columns = [
+      { header: "#", key: "num", width: 5 },
+      { header: "Tarea", key: "descripcion", width: 40 },
+      { header: "Colaborador", key: "colaborador", width: 25 },
+      { header: "Estado", key: "estado", width: 15 },
+      { header: "Inicio", key: "inicio", width: 22 },
+      { header: "Finalizado", key: "finalizado", width: 22 },
+      { header: "Duración", key: "duracion", width: 18 },
+    ];
 
     const formatearFecha = (iso) => {
       const fecha = new Date(iso);
@@ -321,19 +333,6 @@ app.get('/exportar-excel-finalizadas', async (_req, res) => {
       return `${dias}d ${horas}h ${minutos}min`;
     };
 
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("Tareas Finalizadas");
-
-    sheet.columns = [
-      { header: "#", key: "num", width: 5 },
-      { header: "Tarea", key: "descripcion", width: 40 },
-      { header: "Colaborador", key: "colaborador", width: 25 },
-      { header: "Estado", key: "estado", width: 15 },
-      { header: "Inicio", key: "inicio", width: 22 },
-      { header: "Finalizado", key: "finalizado", width: 22 },
-      { header: "Duración", key: "duracion", width: 18 },
-    ];
-
     tareas.forEach((t, i) => {
       sheet.addRow({
         num: i + 1,
@@ -346,27 +345,37 @@ app.get('/exportar-excel-finalizadas', async (_req, res) => {
       });
     });
 
-    // Estilo encabezados
-    sheet.getRow(1).eachCell(cell => {
+    // Estilo tabla
+    sheet.autoFilter = { from: 'A1', to: 'G1' };
+    sheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true };
-      cell.alignment = { vertical: 'middle', horizontal: 'center' };
       cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFCCE5FF' }
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFCCE5FF" },
       };
       cell.border = {
-        top: { style: 'thin' },
-        bottom: { style: 'thin' },
-        left: { style: 'thin' },
-        right: { style: 'thin' }
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
       };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
     });
 
-    sheet.autoFilter = { from: 'A1', to: 'G1' };
+    sheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return; // encabezado ya tiene estilo
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+    });
 
     const buffer = await workbook.xlsx.writeBuffer();
-
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition", "attachment; filename=reporte_tareas_finalizadas.xlsx");
     res.send(buffer);
