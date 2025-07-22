@@ -290,6 +290,92 @@ app.delete('/presentacion-planilla/:id', async (req, res) => {
   res.json({ mensaje: 'Registro de planilla eliminado correctamente' });
 });
 
+const ExcelJS = require("exceljs");
+
+app.get('/exportar-excel-finalizadas', async (_req, res) => {
+  try {
+    const { data: tareas, error } = await supabase
+      .from('tareas')
+      .select('*')
+      .eq('estado', 'Finalizado')
+      .eq('archivada', true);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    const formatearFecha = (iso) => {
+      const fecha = new Date(iso);
+      return fecha.toLocaleString("es-SV", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    };
+
+    const formatearTiempo = (min) => {
+      const dias = Math.floor(min / 1440);
+      const horas = Math.floor((min % 1440) / 60);
+      const minutos = min % 60;
+      return `${dias}d ${horas}h ${minutos}min`;
+    };
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Tareas Finalizadas");
+
+    sheet.columns = [
+      { header: "#", key: "num", width: 5 },
+      { header: "Tarea", key: "descripcion", width: 40 },
+      { header: "Colaborador", key: "colaborador", width: 25 },
+      { header: "Estado", key: "estado", width: 15 },
+      { header: "Inicio", key: "inicio", width: 22 },
+      { header: "Finalizado", key: "finalizado", width: 22 },
+      { header: "Duración", key: "duracion", width: 18 },
+    ];
+
+    tareas.forEach((t, i) => {
+      sheet.addRow({
+        num: i + 1,
+        descripcion: t.descripcion,
+        colaborador: t.colaborador,
+        estado: t.estado,
+        inicio: formatearFecha(t.horaInicio),
+        finalizado: formatearFecha(t.horaFin),
+        duracion: formatearTiempo(t.tiempo),
+      });
+    });
+
+    // Estilo encabezados
+    sheet.getRow(1).eachCell(cell => {
+      cell.font = { bold: true };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFCCE5FF' }
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        bottom: { style: 'thin' },
+        left: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+
+    sheet.autoFilter = { from: 'A1', to: 'G1' };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=reporte_tareas_finalizadas.xlsx");
+    res.send(buffer);
+  } catch (error) {
+    console.error("Error generando Excel:", error);
+    res.status(500).send("No se pudo generar el Excel.");
+  }
+});
+
 // 🚀 Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
