@@ -92,16 +92,23 @@ export default function TareasFinalizadas() {
     }
   };
 
-  // ✅ Nueva función: descargar Excel desde backend
   const exportarExcelDesdeBackend = () => {
-    fetch("https://control-de-tareas-de-colaboradores.onrender.com/exportar-excel-finalizadas")
-      .then((res) => res.blob())
-      .then((blob) => saveAs(blob, "reporte_tareas_finalizadas.xlsx"))
-      .catch((err) => {
-        console.error("Error al descargar Excel:", err);
-        alert("No se pudo descargar el archivo Excel.");
-      });
-  };
+  const tareasFiltradas = tareas.filter(filtrarTareas);
+
+  fetch("https://control-de-tareas-de-colaboradores.onrender.com/exportar-excel-finalizadas", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ tareas: tareasFiltradas }),
+  })
+    .then((res) => res.blob())
+    .then((blob) => saveAs(blob, "reporte_tareas_finalizadas.xlsx"))
+    .catch((err) => {
+      console.error("Error al exportar Excel:", err);
+      alert("Error al exportar Excel");
+    });
+};
 
   const colaboradoresUnicos = [...new Set(tareas.map(t => t.colaborador))];
 
@@ -141,21 +148,21 @@ export default function TareasFinalizadas() {
         </button>
       </div>
 
-      <div className="flex gap-4 mb-4">
-        <button
-          onClick={generarWord}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
-        >
-          Descargar Word
-        </button>
+<div className="flex gap-4 mb-4">
+  <button
+    onClick={generarWord}
+    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+  >
+    Descargar Word
+  </button>
 
-        <button
-          onClick={exportarExcelDesdeBackend}
-          className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded shadow"
-        >
-          Descargar Excel PRO
-        </button>
-      </div>
+  <button
+    onClick={exportarExcelDesdeBackend}
+    className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded shadow"
+  >
+    Descargar Excel PRO
+  </button>
+</div>
 
       <ul className="space-y-2">
         {tareas.filter(filtrarTareas).map((t) => (
@@ -170,4 +177,3 @@ export default function TareasFinalizadas() {
       </ul>
     </div>
   );
-}
